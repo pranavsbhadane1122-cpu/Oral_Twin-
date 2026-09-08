@@ -157,11 +157,12 @@ def split_clusters(items, clusters, fractions, seed):
     return assignment
 
 
-def gather_images(source_map, log=print):
+def gather_images(source_map, img_size, log=print):
     """source_map: {class_name: [source_dir, ...]}.
 
     Loads every image, drops unreadable files and exact MD5 duplicates,
-    computes dihedral pHashes. Returns list of item dicts.
+    computes dihedral pHashes on the image resized to the EXPORT size so the
+    hashes match what post-export verification sees. Returns item dicts.
     """
     items, seen_md5 = [], set()
     n_corrupt = n_exact_dup = 0
@@ -180,7 +181,8 @@ def gather_images(source_map, log=print):
                     n_corrupt += 1
                     continue
                 seen_md5.add(digest)
-                items.append({"path": p, "cls": cls, "hashes": dihedral_phashes(img)})
+                resized = cv2.resize(img, (img_size, img_size), interpolation=cv2.INTER_AREA)
+                items.append({"path": p, "cls": cls, "hashes": dihedral_phashes(resized)})
         log(f"  {cls}: {sum(1 for it in items if it['cls'] == cls)} usable images so far")
     log(f"  dropped: {n_exact_dup} exact duplicates (MD5), {n_corrupt} unreadable")
     return items

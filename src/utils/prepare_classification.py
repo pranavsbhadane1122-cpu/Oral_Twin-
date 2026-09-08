@@ -61,8 +61,8 @@ def main():
         print(f"  {cls} <- {shown}")
 
     print("gathering images (MD5 dedup) ...")
-    items = gather_images(source_map)
-    clusters = cluster_near_duplicates(items, threshold)
+    items = gather_images(source_map, img_size)
+    clusters = cluster_near_duplicates(items, threshold + cfg["dedup"]["cluster_margin"])
     n_multi = sum(1 for c in clusters if len(c) > 1)
     print(f"  near-duplicate clusters with >1 image: {n_multi}")
 

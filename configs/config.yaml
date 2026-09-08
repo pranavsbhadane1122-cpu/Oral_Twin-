@@ -24,6 +24,7 @@ split:
 dedup:
   phash_size: 8          # perceptual hash grid (8 -> 64-bit hash)
   phash_threshold: 8     # Hamming distance <= threshold counts as near-duplicate (conservative)
+  cluster_margin: 4      # clustering uses threshold+margin so borderline pairs never straddle splits
 
 opmd:
   img_size: 224

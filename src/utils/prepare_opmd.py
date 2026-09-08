@@ -52,8 +52,8 @@ def main():
         print(f"  {cls} <- {[str(d.relative_to(raw_root)) for d in dirs]}")
 
     print("gathering images (MD5 dedup) ...")
-    items = gather_images(source_map)
-    clusters = cluster_near_duplicates(items, threshold)
+    items = gather_images(source_map, img_size)
+    clusters = cluster_near_duplicates(items, threshold + cfg["dedup"]["cluster_margin"])
     print(f"  near-duplicate clusters with >1 image: "
           f"{sum(1 for c in clusters if len(c) > 1)}")
 
