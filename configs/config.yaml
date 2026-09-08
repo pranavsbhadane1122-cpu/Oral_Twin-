@@ -8,7 +8,19 @@ classification:
   img_size: 224
   batch_size: 32
   epochs: 30
-  classes: [healthy, caries, calculus, gingivitis]
+  # 3-class mode until the external "healthy" dataset arrives (access requested);
+  # restore to [healthy, caries, calculus, gingivitis] and rerun once available.
+  classes: [caries, calculus, gingivitis]
+  learning_rate: 0.001
+  fine_tune_lr: 0.0001
+  fine_tune_layers: 30
+  early_stop_patience: 5
+  dropout: 0.3
+  augment:
+    rotation_deg: 10
+    zoom: 0.1
+    brightness: 0.1
+    contrast: 0.1
 
 segmentation:
   img_size: 256
