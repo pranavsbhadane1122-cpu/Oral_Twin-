@@ -1,0 +1,22 @@
+paths:
+  raw: data/raw
+  processed: data/processed
+  longitudinal: data/longitudinal
+  models: models
+
+classification:
+  img_size: 224
+  batch_size: 32
+  epochs: 30
+  classes: [healthy, caries, calculus, gingivitis]
+
+segmentation:
+  img_size: 256
+  batch_size: 16
+  epochs: 50
+
+split:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  seed: 42
