@@ -42,6 +42,29 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+alignment:
+  detector: orb
+  n_features: 4000
+  ratio_test: 0.75
+  ransac_reproj_thresh: 4.0
+  min_inliers: 15
+  clahe_clip: 2.0
+  clahe_grid: 8
+  mask_min_area_frac: 0.10   # fall back to full image if mouth mask is smaller
+  # homography plausibility limits (H normalized to h33=1, mapping visit2->visit1)
+  min_scale: 0.5             # sqrt(|det| of the 2x2 affine part)
+  max_scale: 2.0
+  max_perspective: 0.002     # |h31|, |h32| beyond this = implausible tilt
+  min_abs_det: 1.0e-6        # near-singular rejection
+  confidence:
+    w_inlier_ratio: 0.35     # weights sum to 1
+    w_inliers: 0.20
+    w_reproj: 0.30
+    w_blur: 0.15
+    inliers_saturation: 60   # n_inliers at which that term maxes out
+    reproj_halflife: 2.0     # px; reproj term = exp(-err/halflife)
+    blur_saturation: 150.0   # variance-of-Laplacian at which blur term maxes out
+
 longitudinal:
   n_pairs: 200
   source_split: test     # pairs are built ONLY from test-split images

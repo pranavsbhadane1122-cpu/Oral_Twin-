@@ -29,3 +29,11 @@ oraltwin/
 ```
 
 All paths and hyperparameters live in `configs/config.yaml` — never hard-coded.
+
+## Plan deviations
+
+- **Phase 4 (alignment) is being built before Phase 3 (segmentation).** Phase 3's
+  best training data — the COCO lesion annotations of the Piyarathne et al. Zenodo
+  dataset — is pending restricted-access approval. Alignment only needs the
+  simulated longitudinal pairs, which exist and passed their tests, so it was
+  pulled forward (decided 2026-09-10).
