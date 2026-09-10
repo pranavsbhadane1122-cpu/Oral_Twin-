@@ -229,6 +229,7 @@ def compare(mask1, mask2_warped, img1, img2_warped, confidence, cfg=None):
             "message": _message("new", 0.0, True, confidence, False, False),
         })
 
+    report["lesions"] = lesions
     notable = [l for l in lesions if l["notable_area_change"]
                or (l["color_shift"] or {}).get("notable")
                or (l["edge_irregularity"] or {}).get("notable")]
