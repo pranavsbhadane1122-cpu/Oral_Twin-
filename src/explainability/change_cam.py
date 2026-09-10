@@ -39,10 +39,9 @@ def diverging_colormap(diff, cmap_name="bwr"):
     import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.cm as cm
 
     normalized = (np.clip(diff, -1.0, 1.0) + 1.0) / 2.0
-    rgba = cm.get_cmap(cmap_name)(normalized)
+    rgba = matplotlib.colormaps[cmap_name](normalized)
     rgb = (rgba[..., :3] * 255).astype(np.uint8)
     return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
