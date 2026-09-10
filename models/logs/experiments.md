@@ -47,13 +47,66 @@ photos and that the source set mixes illustrations with clinical photos.
 accuracy.** v1 is retained only as the comparison baseline
 (models/classifier_3class_v1_contaminated.h5) and must not ship.
 
-## Phase 2b — de-biased retrain (in progress)
+## 2026-09-10 — classifier_3class v2 (de-biased data, identical hyperparameters)
 
-Plan: detect and exclude illustrations, collapse augmentation families so
-flips/rotations of one base photo count once and never straddle splits,
-rebalance classes, retrain with identical hyperparameters so data is the only
-variable. Acceptance is Grad-CAM localisation and warp stability, not accuracy;
-a lower honest number on clean data is the better model.
+**The headline finding is about the data, not the model: 6246 raw images in the
+three source folders reduce to 199 distinct base photographs.** Everything else
+is exact duplicates, flips, rotations, crops and exposure variants.
+
+De-biasing applied (all three filters, user-approved 2026-09-10):
+  - the entire `caries augmented data set` folder dropped (2382 images)
+  - 966 clipped/blown-out images dropped
+  - 297 images scoring >= 0.70 on the drawn/texture-free detector dropped
+  - augmentation families collapsed at pHash distance 14, max 3 images/family
+  - classes capped at 2x the smallest
+
+Resulting dataset: **345 images** (caries 122, calculus 85, gingivitis 138)
+from 199 families -> train 241 / val 52 / test 52. Hyperparameters unchanged.
+Trained locally on CPU (TF 2.15) rather than Colab: at this size training takes
+minutes, and it avoids the Keras 3 -> Keras 2 conversion entirely. Early
+stopping fired at stage-b epoch 6, restoring epoch 1.
+
+### Both models on the SAME clean test split (52 images)
+
+| metric | v1 contaminated | v2 de-biased |
+|---|---|---|
+| accuracy | 0.8846 | **0.6346** |
+| warp stability (+/-8 deg, 0.92-1.08 scale) | 1.0000 (0/52 flipped) | **0.7885** (11/52) |
+| Grad-CAM on-target (10 cases) | ~3/10 | **6/10** |
+| caries P / R / F1 | 1.000 / 0.722 / 0.839 | 0.682 / 0.833 / 0.750 |
+| calculus P / R / F1 | 0.929 / 1.000 / 0.963 | 0.562 / 0.692 / 0.621 |
+| gingivitis P / R / F1 | 0.800 / 0.952 / 0.870 | 0.643 / 0.429 / 0.514 |
+
+**v1's numbers on this table are not trustworthy.** v1 trained on 3255 images
+drawn from the same 199 families that the new test split is derived from, so
+almost every "test" image is a near-duplicate of something v1 memorised. Its
+0.8846 and its perfect warp stability are both what memorisation looks like.
+v1's original 0.8996 was measured on the old contaminated split.
+
+### Acceptance against the Phase 2b gate
+
+  (a) accuracy reported honestly: **0.6346**, down from 0.8996. Expected.
+  (b) Grad-CAM localisation: **6/10 on target, target was >= 8/10 - MISSED**,
+      but up from ~3/10. The split by class is the informative part:
+      calculus 3/3, gingivitis 3/4, **caries 0/3**.
+  (c) warp stability: **0.7885, target was >= 0.90 - MISSED**. The test is kept
+      in tests/test_training.py and currently fails by design; nothing was
+      tuned to make it pass.
+
+### Conclusion
+
+De-biasing measurably improved *what the model looks at* (gum margins and
+cervical tooth surfaces for gingivitis and calculus, where those conditions
+actually present) while lowering accuracy, which is the expected direction. But
+neither acceptance gate was met, and caries localisation did not improve at all.
+
+With 199 base photographs, 241 of which are training images across three
+classes, this corpus cannot support a trustworthy classifier. The honest
+conclusion for the paper is that **the data, not the architecture or the
+training recipe, is the binding constraint.**
+
+*OralTwin is a screening aid, not a diagnostic tool — findings must be checked
+by a dentist.*
 
 *OralTwin is a screening aid, not a diagnostic tool — findings must be checked
 by a dentist.*

@@ -8,12 +8,14 @@
 
 import unittest
 
+import cv2
 import numpy as np
 import tensorflow as tf
 
 from src.classification.dataset import class_counts, compute_class_weights, make_dataset
 from src.classification.model import build_model, compile_model, unfreeze_top
 from src.utils.config import PROJECT_ROOT, load_config
+from src.utils.prep_common import imread_unicode
 
 CFG = load_config()
 CLASSES = CFG["classification"]["classes"]
@@ -53,6 +55,64 @@ class TestLoaders(unittest.TestCase):
         self.assertTrue(all(w > 0 for w in weights.values()))
         weighted_total = sum(weights[i] * counts[cls] for i, cls in enumerate(CLASSES))
         self.assertAlmostEqual(weighted_total, sum(counts.values()), delta=1e-3)
+
+
+class TestWarpStability(unittest.TestCase):
+    """A model reading pathology should not change its mind when the same photo
+    is re-framed slightly. v1 failed this badly: pair_0036 flipped from
+    p(caries)=0.99 to 0.00 under a small warp of the same image.
+    """
+
+    MIN_STABLE_FRACTION = 0.90
+
+    @staticmethod
+    def random_homography(rng, w, h):
+        """Small, realistic re-framing: +/-8 deg, 0.92-1.08 scale, slight shift."""
+        angle = rng.uniform(-8.0, 8.0)
+        scale = rng.uniform(0.92, 1.08)
+        M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, scale)
+        M[0, 2] += rng.uniform(-0.03, 0.03) * w
+        M[1, 2] += rng.uniform(-0.03, 0.03) * h
+        return np.vstack([M, [0, 0, 1]])
+
+    def test_predictions_survive_small_warps(self):
+        path = PROJECT_ROOT / CFG["paths"]["models"] / f"classifier_{len(CLASSES)}class.h5"
+        if not path.exists():
+            self.skipTest("no trained model available")
+        model = tf.keras.models.load_model(path, compile=False)
+
+        images = []
+        for cls in CLASSES:
+            images += sorted(
+                (PROJECT_ROOT / CFG["paths"]["processed"] / "classification" / "test" / cls)
+                .glob("*.jpg")
+            )
+        if not images:
+            self.skipTest("no test images available")
+
+        rng = np.random.default_rng(CFG["split"]["seed"])
+        preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
+        originals, warped = [], []
+        for p in images:
+            # the training loader decodes JPEG to RGB; OpenCV reads BGR
+            img = cv2.cvtColor(imread_unicode(p), cv2.COLOR_BGR2RGB)
+            h, w = img.shape[:2]
+            H = self.random_homography(rng, w, h)
+            originals.append(preprocess(img.astype(np.float32)))
+            warped.append(preprocess(
+                cv2.warpPerspective(img, H, (w, h), borderMode=cv2.BORDER_REFLECT)
+                .astype(np.float32)))
+
+        pred_original = model.predict(np.stack(originals), verbose=0).argmax(axis=1)
+        pred_warped = model.predict(np.stack(warped), verbose=0).argmax(axis=1)
+        stable = float((pred_original == pred_warped).mean())
+
+        self.assertGreaterEqual(
+            stable, self.MIN_STABLE_FRACTION,
+            f"only {100*stable:.1f}% of predictions survived a small re-framing "
+            f"({int((pred_original != pred_warped).sum())} of {len(images)} flipped); "
+            f"a model reading pathology should be far more stable",
+        )
 
 
 class TestCheckpoint(unittest.TestCase):

@@ -1,15 +1,15 @@
 Evaluation report - classifier_3class (caries, calculus, gingivitis)
-test images: 697
-overall accuracy: 0.8996
+test images: 52
+overall accuracy: 0.6346
 
 class        precision    recall specificity      f1  support
-caries          0.9946    0.9483      0.9935  0.9709      387
-calculus        0.7734    0.8049      0.9495  0.7888      123
-gingivitis      0.8050    0.8610      0.9235  0.8320      187
+caries          0.6500    0.7222      0.7941  0.6842       18
+calculus        0.6250    0.7692      0.8462  0.6897       13
+gingivitis      0.6250    0.4762      0.8065  0.5405       21
 
 confusion matrix (rows=true, cols=predicted):
-[[367   4  16]
- [  1  99  23]
- [  1  25 161]]
+[[13  2  3]
+ [ 0 10  3]
+ [ 7  4 10]]
 
 NOTE: OralTwin is a screening aid, not a diagnostic tool. Any finding must be checked by a dentist.

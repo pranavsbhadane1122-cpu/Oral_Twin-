@@ -45,6 +45,15 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   signature) without learning any dental feature.
   **Consequence: 89.96% measures dataset separability, not clinical accuracy.**
   The v1 classifier must not ship and its Grad-CAMs must not be shown to users.
+- **The corpus contains only ~199 distinct base photographs.** Phase 2b
+  de-biasing collapsed the 6246 raw images of the three source folders into 199
+  augmentation families; after capping and rebalancing, 345 usable images remain
+  (241 for training). The de-biased v2 classifier scores 0.6346 with 6/10
+  Grad-CAM cases on target (up from ~3/10) and 0.79 warp stability, missing both
+  Phase 2b acceptance gates. Caries localisation did not improve at all (0/3).
+  **The data, not the architecture, is the binding constraint**; a trustworthy
+  classifier needs a larger, less duplicated corpus. See
+  `models/logs/experiments.md` for the full comparison.
 
 ## Plan deviations
 

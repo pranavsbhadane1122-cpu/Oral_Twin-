@@ -1,0 +1,92 @@
+{
+  "v1_contaminated": {
+    "accuracy_clean_test": 0.8846153846153846,
+    "warp_stability": 1.0,
+    "n_flipped_by_warp": 0,
+    "confusion_matrix": [
+      [
+        13,
+        0,
+        5
+      ],
+      [
+        0,
+        13,
+        0
+      ],
+      [
+        0,
+        1,
+        20
+      ]
+    ],
+    "per_class": {
+      "caries": {
+        "precision": 1.0,
+        "recall": 0.7222,
+        "specificity": 1.0,
+        "f1": 0.8387,
+        "support": 18
+      },
+      "calculus": {
+        "precision": 0.9286,
+        "recall": 1.0,
+        "specificity": 0.9744,
+        "f1": 0.963,
+        "support": 13
+      },
+      "gingivitis": {
+        "precision": 0.8,
+        "recall": 0.9524,
+        "specificity": 0.8387,
+        "f1": 0.8696,
+        "support": 21
+      }
+    }
+  },
+  "v2_debiased": {
+    "accuracy_clean_test": 0.6346153846153846,
+    "warp_stability": 0.7884615384615384,
+    "n_flipped_by_warp": 11,
+    "confusion_matrix": [
+      [
+        15,
+        2,
+        1
+      ],
+      [
+        0,
+        9,
+        4
+      ],
+      [
+        7,
+        5,
+        9
+      ]
+    ],
+    "per_class": {
+      "caries": {
+        "precision": 0.6818,
+        "recall": 0.8333,
+        "specificity": 0.7941,
+        "f1": 0.75,
+        "support": 18
+      },
+      "calculus": {
+        "precision": 0.5625,
+        "recall": 0.6923,
+        "specificity": 0.8205,
+        "f1": 0.6207,
+        "support": 13
+      },
+      "gingivitis": {
+        "precision": 0.6429,
+        "recall": 0.4286,
+        "specificity": 0.8387,
+        "f1": 0.5143,
+        "support": 21
+      }
+    }
+  }
+}
