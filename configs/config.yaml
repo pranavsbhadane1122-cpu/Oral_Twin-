@@ -45,10 +45,21 @@ opmd:
 delta:
   min_lesion_area_px: 100      # connected components smaller than this are noise
   change_area_thresh: 0.10     # >=10% area change is "notable"
-  color_shift_thresh: 12.0     # mean |dHSV| inside the lesion that counts as notable
   compactness_change_thresh: 0.15  # relative change in perimeter^2/(4*pi*area)
   confidence_floor: 0.3        # below this alignment confidence, refuse to compare
   match_iou_thresh: 0.10       # IoU above which two components are the same lesion
+  # colour is measured RELATIVE to a ring of surrounding tissue in the same
+  # image, so a global lighting/white-balance shift between visits cancels out
+  color_ring_px: 12            # ring thickness around the lesion
+  color_ring_min_px: 60        # smaller ring than this -> colour "not measurable"
+  # calibrated by scripts/calibrate_color_thresh.py: p95 of the relative-colour
+  # magnitude over 97 no-change lesions was 27.47, rounded up -> 4.1% flagged
+  relative_color_thresh: 28.0
+  # a lesion nearer than this to the edge of the two photos' overlap is only
+  # partly visible in the newer photo, so its area cannot be compared fairly
+  edge_margin_px: 3
+  reliability_high: 0.7        # confidence at/above this is "high"
+  reliability_moderate: 0.5    # at/above this "moderate", below it "low"
   synthetic:
     # base lesion drawn for pairs whose ground truth injected no lesion change,
     # so "no change" pairs still exercise the false-change path

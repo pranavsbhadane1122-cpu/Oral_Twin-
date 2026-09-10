@@ -42,3 +42,12 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   segmentation model has no training data yet. `src/delta/compare.py` takes any
   binary/instance mask, so real U-Net masks plug in unchanged once Phase 3 lands —
   only the mask source changes, not the comparison code (decided 2026-09-10).
+- **Phase 5 Definition of Done was amended after the first validation run**
+  (2026-09-10). The original area targets passed, but validation exposed two
+  design defects, so two acceptance criteria were added:
+  (a) colour false-flag rate must be <= 10% on no-change pairs — the original
+  colour metric compared absolute HSV and so fired on 88/100 unchanged pairs,
+  reacting to camera lighting rather than tissue;
+  (b) lesions lying partly outside the newer photo's frame must be labelled
+  non-comparable and never reported as an area change — previously a lesion
+  pushed off-frame read as up to -50% "shrinkage" on a no-change pair.
