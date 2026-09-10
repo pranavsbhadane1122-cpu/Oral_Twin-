@@ -37,3 +37,8 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   dataset — is pending restricted-access approval. Alignment only needs the
   simulated longitudinal pairs, which exist and passed their tests, so it was
   pulled forward (decided 2026-09-10).
+- **Phase 5 (delta / change detection) is validated against SYNTHETIC lesion masks**
+  derived from the longitudinal ground truth, for the same reason: Phase 3's
+  segmentation model has no training data yet. `src/delta/compare.py` takes any
+  binary/instance mask, so real U-Net masks plug in unchanged once Phase 3 lands —
+  only the mask source changes, not the comparison code (decided 2026-09-10).
