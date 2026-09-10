@@ -30,6 +30,22 @@ oraltwin/
 
 All paths and hyperparameters live in `configs/config.yaml` — never hard-coded.
 
+## Known issues
+
+- **The 3-class classifier (v1, 89.96% test accuracy) learned shortcuts, not
+  pathology.** Grad-CAM inspection in Phase 7 (2026-09-10) found that only about
+  3 of 10 sampled cases put their attention on teeth or gum tissue; most caries
+  cases attended to lips, image corners, or plain background, and one case
+  attended to the blank area of a cartoon illustration. A small warp of the same
+  photo flipped one prediction from p=0.99 to p=0.00.
+  Root-cause hypothesis under test in Phase 2b: the caries class is roughly 85%
+  augmented copies of a small number of base photos and mixes cartoon
+  illustrations with real clinical photos, so the three classes are separable by
+  image *provenance* (crop style, borders, illustration-vs-photo, lighting
+  signature) without learning any dental feature.
+  **Consequence: 89.96% measures dataset separability, not clinical accuracy.**
+  The v1 classifier must not ship and its Grad-CAMs must not be shown to users.
+
 ## Plan deviations
 
 - **Phase 4 (alignment) is being built before Phase 3 (segmentation).** Phase 3's

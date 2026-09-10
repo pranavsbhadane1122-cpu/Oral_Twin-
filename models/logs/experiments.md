@@ -29,5 +29,31 @@
     logs/classifier_3class_history.csv, logs/confusion_matrix_3class.png,
     logs/eval_report_3class.txt.
 
+### 2026-09-10 — v1 INVALIDATED by Grad-CAM inspection
+
+Phase 7 explainability inspection of 10 representative cases found only ~3/10
+heatmaps concentrating on teeth or gum tissue. Failures were systematic, not
+random: pair_0025 attended to the four image corners and lips, pair_0150 to the
+upper lip and skin, pair_0036 to the lower lip while teeth with visibly dark
+caries stayed cold, pair_0097 to the blank background of a cartoon illustration.
+pair_0036 also flipped from p(caries)=0.99 to 0.00 under a small warp of the
+same photo — behaviour inconsistent with reading real pathology.
+
+Diagnosis: shortcut learning driven by dataset provenance. The Phase 1 audit had
+already recorded that the caries class is ~85% augmented copies of a few base
+photos and that the source set mixes illustrations with clinical photos.
+
+**The 0.8996 figure should be read as dataset separability, not clinical
+accuracy.** v1 is retained only as the comparison baseline
+(models/classifier_3class_v1_contaminated.h5) and must not ship.
+
+## Phase 2b — de-biased retrain (in progress)
+
+Plan: detect and exclude illustrations, collapse augmentation families so
+flips/rotations of one base photo count once and never straddle splits,
+rebalance classes, retrain with identical hyperparameters so data is the only
+variable. Acceptance is Grad-CAM localisation and warp stability, not accuracy;
+a lower honest number on clean data is the better model.
+
 *OralTwin is a screening aid, not a diagnostic tool — findings must be checked
 by a dentist.*
