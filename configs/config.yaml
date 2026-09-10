@@ -42,6 +42,24 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+explain:
+  # "auto" resolves to the last 4-D (spatial) layer of the MobileNetV2 base at
+  # runtime; on the current model that is out_relu (7x7x1280), the standard
+  # Grad-CAM target. Pin an explicit layer name here only to override.
+  gradcam_layer: auto
+  overlay_alpha: 0.4
+  colormap: jet
+  diverging_colormap: bwr      # change-CAM: red = more attention, blue = less
+  flat_cam_std_eps: 0.01       # heatmap std below this = flat = uninformative
+
+risk:
+  # rule-based bands; no learned risk model, no personal prediction
+  growth_moderate_pct: 10.0    # notable growth on a comparable lesion
+  growth_elevated_pct: 30.0    # substantial growth
+  condition_prob_high: 0.70    # classifier confidence for a "confident" condition
+  persistent_conditions: [gingivitis, calculus]
+  escalate_on_rule_count: 2    # two or more Moderate-level rules -> Elevated
+
 delta:
   min_lesion_area_px: 100      # connected components smaller than this are noise
   change_area_thresh: 0.10     # >=10% area change is "notable"

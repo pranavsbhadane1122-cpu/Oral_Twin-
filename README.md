@@ -51,3 +51,10 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   (b) lesions lying partly outside the newer photo's frame must be labelled
   non-comparable and never reported as an area change — previously a lesion
   pushed off-frame read as up to -50% "shrinkage" on a no-change pair.
+- **Phase 7 (explainability + rule-based risk) was built before Phases 3 and 6**,
+  which remain blocked on the restricted-access Zenodo dataset. Grad-CAM runs on
+  the existing 3-class classifier and the risk module is rule-based, so neither
+  needs the missing data (decided 2026-09-10). The risk rules deliberately
+  **exclude the edge/compactness metric**, which is known to be
+  resampling-sensitive (35% false-flag rate) and must not reach user-facing
+  output until reformulated.
