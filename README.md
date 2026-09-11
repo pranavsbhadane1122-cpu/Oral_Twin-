@@ -48,12 +48,20 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
 - **The corpus contains only ~199 distinct base photographs.** Phase 2b
   de-biasing collapsed the 6246 raw images of the three source folders into 199
   augmentation families; after capping and rebalancing, 345 usable images remain
-  (241 for training). The de-biased v2 classifier scores 0.6346 with 6/10
-  Grad-CAM cases on target (up from ~3/10) and 0.79 warp stability, missing both
-  Phase 2b acceptance gates. Caries localisation did not improve at all (0/3).
+  (241 for training). The de-biased v2 classifier scores 0.6346 (95% CI
+  0.499-0.752) with 0.79 warp stability, missing both Phase 2b acceptance gates.
+  On the same ten photographs, v1 and v2 both put Grad-CAM attention on tooth or
+  gum tissue in 6/10 cases, so de-biasing did not measurably change where the
+  model looks; v2 fails on every true-caries case (0/4).
   **The data, not the architecture, is the binding constraint**; a trustworthy
   classifier needs a larger, less duplicated corpus. See
-  `models/logs/experiments.md` for the full comparison.
+  `models/logs/experiments.md` (including its 2026-09-11 correction) and
+  `docs/paper/classifier_findings.md`.
+- **Status: the classifier is parked (2026-09-11).** It will not be retrained on
+  this corpus and its predictions should not be presented as findings. The
+  alignment, change-detection, explainability and risk modules do not depend on
+  it and continue. The restart runbook for the Piyarathne et al. dataset is in
+  `docs/paper/classifier_findings.md`.
 
 ## Plan deviations
 

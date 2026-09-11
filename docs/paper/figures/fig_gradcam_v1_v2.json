@@ -1,0 +1,142 @@
+[
+  {
+    "pair": "pair_0012",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.9951,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "calculus",
+      "probability": 0.7819,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0030",
+    "true_class": "caries",
+    "v1": {
+      "predicted": "caries",
+      "probability": 0.9831,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "caries",
+      "probability": 0.819,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0070",
+    "true_class": "caries",
+    "v1": {
+      "predicted": "caries",
+      "probability": 0.5848,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "caries",
+      "probability": 0.5517,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0008",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.9679,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "gingivitis",
+      "probability": 0.5063,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0014",
+    "true_class": "caries",
+    "v1": {
+      "predicted": "caries",
+      "probability": 0.8003,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "caries",
+      "probability": 0.6857,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0019",
+    "true_class": "caries",
+    "v1": {
+      "predicted": "caries",
+      "probability": 0.7892,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "gingivitis",
+      "probability": 0.3598,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0002",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.8009,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "calculus",
+      "probability": 0.8495,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0006",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.9984,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "gingivitis",
+      "probability": 0.4868,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0009",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.8249,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "calculus",
+      "probability": 0.7172,
+      "flat": false
+    }
+  },
+  {
+    "pair": "pair_0000",
+    "true_class": "calculus",
+    "v1": {
+      "predicted": "calculus",
+      "probability": 0.9963,
+      "flat": false
+    },
+    "v2": {
+      "predicted": "gingivitis",
+      "probability": 0.3933,
+      "flat": false
+    }
+  }
+]

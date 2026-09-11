@@ -105,6 +105,42 @@ classes, this corpus cannot support a trustworthy classifier. The honest
 conclusion for the paper is that **the data, not the architecture or the
 training recipe, is the binding constraint.**
 
+### 2026-09-11 — CORRECTION to the 2026-09-10 v2 entry above
+
+Two statements above are wrong and are superseded here (the log is kept as
+written; this entry corrects it).
+
+1. **Class breakdown was by PREDICTED class, not true class.** The "calculus 3/3,
+   gingivitis 3/4, caries 0/3" split counted each case under the class the model
+   predicted. By TRUE class the ten cases are 6 calculus and 4 caries, with **no
+   true gingivitis images at all**. v2 by true class: **calculus 6/6, caries 0/4**
+   (three of the six calculus passes were misclassified as gingivitis).
+2. **"~3/10 -> 6/10" was not a like-for-like comparison.** v1's ~3/10 came from the
+   Phase 7 sample on the ORIGINAL test split, which still held illustrations and
+   blown-out images. Grad-CAM for both models on the SAME ten photographs
+   (docs/paper/figures/fig_gradcam_v1_v2.jpg):
+
+   | | pass | marginal | fail | calculus (true) | caries (true) |
+   |---|---|---|---|---|---|
+   | v1 | 6 | 2 | 2 | 5/6 | 1/4 (+2 marginal) |
+   | v2 | 6 | 1 | 3 | 6/6 | 0/4 |
+
+   On matched photographs de-biasing did **not** measurably change where the model
+   looks. The conclusion that the data is the binding constraint stands, and is
+   stronger for it.
+
+Wilson 95% intervals (n = 52 test photographs): v2 accuracy 0.635 [0.499, 0.752],
+v2 warp stability 0.788 [0.660, 0.878]; v1 accuracy on the clean split 0.885
+[0.770, 0.946] (leakage-confounded). Grad-CAM 6/10 -> [0.313, 0.832].
+
+Grad-CAM verdicts in this log were made by the AI assistant, unblinded, with the
+prediction visible. They must be re-scored by a dental clinician before
+publication.
+
+**Decision (2026-09-11): the classifier is PARKED.** No further retraining on this
+corpus; restart only when the Piyarathne et al. dataset clears access review. See
+docs/paper/classifier_findings.md for the write-up and the restart runbook.
+
 *OralTwin is a screening aid, not a diagnostic tool — findings must be checked
 by a dentist.*
 
