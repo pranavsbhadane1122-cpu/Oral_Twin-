@@ -28,8 +28,9 @@ from src.utils.config import PROJECT_ROOT, load_config
 from src.utils.prep_common import imread_unicode
 
 NOT_INCLUDED = [
-    "Disease classification (caries / calculus / gingivitis) - the model is parked: "
-    "it learned image provenance rather than pathology, so it names nothing here.",
+    "Naming a condition - the classifier that would do it is parked, because it "
+    "learned to tell images apart by where they came from rather than by "
+    "pathology. This demo names no condition at all.",
     "Lesion segmentation - no trained segmenter yet; regions shown for uploads come "
     "from a labelled placeholder, and sample pairs use simulated masks.",
     "Oral-cancer / OPMD detection - blocked pending access to an external dataset.",
@@ -98,6 +99,45 @@ def demo_cases(cfg=None):
             "note": "Negative control: the second photograph is not an oral photograph.",
         },
     }
+
+
+def lesion_table_rows(lesions):
+    """Rows for the UI table.
+
+    A region that is not comparable shows no figures at all - not even its raw
+    pixel areas. Printing 755 and 1004 next to "partly out of frame" invites the
+    reader to divide them and conclude the spot grew by a third, which is exactly
+    the inference the comparability label exists to prevent.
+    """
+    from src.delta.compare import FULL, PARTIAL
+
+    rows = []
+    for les in lesions:
+        comparable = les["comparability"] == FULL
+        if les["comparability"] == PARTIAL:
+            label = "partly out of frame"
+        elif comparable:
+            label = "comparable"
+        else:
+            label = "low confidence"
+        if comparable:
+            change = (format(les["area_change_pct"], "+.0f") + "%"
+                      if les["area_change_pct"] is not None else "-")
+            area1 = les["area_visit1_px"] or "-"
+            area2 = les["area_visit2_px"] or "-"
+            colour = "notable" if (les.get("color_shift") or {}).get("notable") else "no"
+        else:
+            change = area1 = area2 = colour = "-"
+        rows.append({
+            "region": les["id"],
+            "state": les["state"],
+            "comparability": label,
+            "area, previous visit": area1,
+            "area, this visit": area2,
+            "area change": change,
+            "colour change": colour,
+        })
+    return rows
 
 
 def run_demo(visit1, visit2, pair_name=None, cfg=None):

@@ -1,0 +1,28 @@
+==============================================================================
+CPU BENCHMARK - ALIGNMENT + CHANGE DETECTION (the working pipeline)
+==============================================================================
+
+These modules passed their Phase 4 and Phase 5 gates and are in use. The
+numbers below are the on-device feasibility evidence for them. No neural
+network runs in this path.
+
+pairs processed:   50  (0 refused at alignment)
+image size:        224x224
+ORB features:      4000
+
+per-pair wall clock:
+  read both photographs        mean     5.3 ms   median     3.3   p95     9.8   max    48.6
+  alignment (ORB+RANSAC)       mean    62.1 ms   median    52.3   p95   148.4   max   192.7
+  masks + overlap region       mean     5.6 ms   median     4.1   p95    12.3   max    19.6
+  change detection             mean     7.7 ms   median     7.4   p95    13.8   max    17.3
+  risk band + report text      mean     0.3 ms   median     0.2   p95     0.5   max     1.4
+  TOTAL per pair               mean    81.1 ms   median    70.7   p95   167.3   max   208.7
+
+throughput:        12.3 pairs/second on one CPU core
+python heap peak:  2.5 MB (tracemalloc, Python allocations only)
+process peak RSS:  63.4 MB (includes the Python interpreter and OpenCV, 41.9 MB before the run)
+
+Read with care: this is desktop CPU, not phone silicon, and the photographs
+are the 224x224 processed copies. A phone would need its own measurement.
+
+OralTwin is a screening aid, not a diagnostic tool.

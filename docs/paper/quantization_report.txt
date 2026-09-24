@@ -1,0 +1,25 @@
+==============================================================================
+TFLITE CONVERSION AND BENCHMARK
+==============================================================================
+
+FEASIBILITY MEASUREMENT ON A PARKED MODEL. The classifier below is not fit for use: Phase 2b showed it separates classes by image provenance rather than by pathology. These numbers describe size and speed on this hardware. The accuracy column shows only what quantisation costs relative to the same parked model; it is NOT a performance claim and must never be quoted as one.
+
+model:        models\classifier_3class.h5
+input:        224x224x3, 3 classes
+latency:      mean of 50 runs after 5 warm-up, batch 1, CPU
+
+test set:     52 images from the de-biased split
+Keras .h5:    9.41 MB, accuracy 0.6346
+
+variant      size MB   vs .h5   mean ms   p95 ms  accuracy    delta
+------------------------------------------------------------------------------
+float32         8.88     94%     20.92    34.44    0.6346  +0.0000
+float16         4.48     48%     17.40    19.26    0.6346  +0.0000
+int8            2.72     29%     15.03    17.01    0.6538  +0.0192
+
+Phase 8 size budget: 15 MB per model.
+  float32   8.88 MB - within budget
+  float16   4.48 MB - within budget
+  int8      2.72 MB - within budget
+
+FEASIBILITY MEASUREMENT ON A PARKED MODEL. The classifier below is not fit for use: Phase 2b showed it separates classes by image provenance rather than by pathology. These numbers describe size and speed on this hardware. The accuracy column shows only what quantisation costs relative to the same parked model; it is NOT a performance claim and must never be quoted as one.

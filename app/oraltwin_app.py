@@ -19,8 +19,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.delta.compare import FULL, PARTIAL  # noqa: E402
-from src.demo.pipeline import NOT_INCLUDED, SCREENING_LINE, demo_cases, run_demo  # noqa: E402
+from src.delta.compare import PARTIAL  # noqa: E402
+from src.demo.pipeline import (  # noqa: E402
+    NOT_INCLUDED,
+    SCREENING_LINE,
+    demo_cases,
+    lesion_table_rows,
+    run_demo,
+)
 from src.utils.config import load_config  # noqa: E402
 
 BAND_STYLE = {"Low": "#1C6D60", "Moderate": "#7F620E", "Elevated": "#983820"}
@@ -66,7 +72,7 @@ def render_alignment(result):
         st.caption(str(alignment["n_inliers"]) + " matching points")
     with cols[1]:
         st.caption("How that confidence was reached")
-        breakdown = alignment["breakdown"]
+        breakdown = {k: v for k, v in alignment["breakdown"].items() if k != "raw"}
         st.dataframe(
             {
                 "component": list(breakdown.keys()),
@@ -75,33 +81,6 @@ def render_alignment(result):
             },
             hide_index=True, use_container_width=True,
         )
-
-
-def lesion_rows(lesions):
-    rows = []
-    for les in lesions:
-        comparable = les["comparability"] == FULL
-        if comparable and les["area_change_pct"] is not None:
-            change = format(les["area_change_pct"], "+.0f") + "%"
-        else:
-            change = "-"
-        if les["comparability"] == PARTIAL:
-            label = "partly out of frame"
-        elif comparable:
-            label = "comparable"
-        else:
-            label = "low confidence"
-        colour = (les.get("color_shift") or {}).get("notable")
-        rows.append({
-            "region": les["id"],
-            "state": les["state"],
-            "comparability": label,
-            "area, previous visit": les["area_visit1_px"] or "-",
-            "area, this visit": les["area_visit2_px"] or "-",
-            "area change": change,
-            "colour change": ("notable" if colour else "-" if not comparable else "no"),
-        })
-    return rows
 
 
 def render_lesions(result):
@@ -119,7 +98,7 @@ def render_lesions(result):
         st.write("No distinct region was tracked in these photographs.")
         return
 
-    st.dataframe(lesion_rows(lesions), hide_index=True, use_container_width=True)
+    st.dataframe(lesion_table_rows(lesions), hide_index=True, use_container_width=True)
     for les in lesions:
         if les["comparability"] == PARTIAL:
             st.warning("Region " + str(les["id"]) + ": " + les["message"])

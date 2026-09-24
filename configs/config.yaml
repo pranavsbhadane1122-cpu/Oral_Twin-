@@ -64,6 +64,14 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+deploy:
+  tflite_variants: [float32, float16, int8]
+  latency_runs: 50
+  warmup_runs: 5
+  representative_samples: 100
+  size_budget_mb: 15        # Phase 8 target per model
+  benchmark_pairs: 50       # visit pairs timed for the non-neural pipeline
+
 demo:
   # Phase 8 demo. Sample pairs come from data/longitudinal (read-only input).
   sample_pairs:
