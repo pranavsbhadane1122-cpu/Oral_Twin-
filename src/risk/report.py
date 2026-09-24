@@ -15,10 +15,31 @@ OralTwin is a screening aid, not a diagnostic tool.
 
 from src.delta.compare import FULL, PARTIAL
 from src.risk.risk_rules import LOW
+from src.utils.config import load_config
 
 HEADER = "ORALTWIN VISIT COMPARISON"
 FOOTER = ("OralTwin is a screening aid, not a diagnostic tool. It cannot diagnose anything. "
           "Have any finding checked by a dentist.")
+
+
+PARKED_NOTICE = [
+    "  Condition screening is switched off in this build.",
+    "  (The condition model is parked pending better training data, so this report",
+    "   describes CHANGE between the two photos only, and names no condition.)",
+]
+
+
+def condition_block(prediction_visit1, prediction_visit2, cfg=None):
+    """Condition lines, or a parked notice when classification.surface_predictions
+    is false. Nothing derived from the classifier may cross this boundary."""
+    cfg = cfg or load_config()
+    if not cfg["classification"].get("surface_predictions", False):
+        return list(PARKED_NOTICE)
+    return [
+        condition_line(prediction_visit1, "previous visit"),
+        condition_line(prediction_visit2, "this visit"),
+        "  (These are pattern matches from a screening model, not a diagnosis.)",
+    ]
 
 
 def condition_line(prediction, label):
@@ -40,7 +61,7 @@ def lesion_lines(change_report):
 
 
 def build_report(pair_name, change_report, risk, prediction_visit1=None,
-                 prediction_visit2=None, image_paths=None, alignment=None):
+                 prediction_visit2=None, image_paths=None, alignment=None, cfg=None):
     """Return the report as a plain-text string."""
     image_paths = image_paths or {}
     alignment = alignment or {}
@@ -51,9 +72,7 @@ def build_report(pair_name, change_report, risk, prediction_visit1=None,
         "=" * 68,
         "",
         "WHAT THE PHOTOS SHOW",
-        condition_line(prediction_visit1, "previous visit"),
-        condition_line(prediction_visit2, "this visit"),
-        "  (These are pattern matches from a screening model, not a diagnosis.)",
+        *condition_block(prediction_visit1, prediction_visit2, cfg),
         "",
         "WHAT CHANGED SINCE LAST VISIT",
     ]

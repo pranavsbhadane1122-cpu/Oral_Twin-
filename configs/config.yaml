@@ -15,6 +15,10 @@ classification:
   # max_class_ratio times the smallest class (the effective cap is the smaller
   # of max_per_class and max_class_ratio * smallest class).
   max_per_class: 600
+  # Phase 8: the classifier is PARKED (see README, Known issues). While this is
+  # false no classifier prediction may reach any user-facing string, and the
+  # PERSISTENT_CONDITION risk rule is disabled.
+  surface_predictions: false
   max_class_ratio: 2.0
   learning_rate: 0.001
   fine_tune_lr: 0.0001

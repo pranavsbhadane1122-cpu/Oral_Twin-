@@ -10,6 +10,7 @@
   - no diagnostic language anywhere in generated text
 """
 
+import copy
 import json
 import re
 import unittest
@@ -241,9 +242,19 @@ class TestRiskRules(unittest.TestCase):
         self.assertTrue(risk["escalated_by_rule_count"])
         self.assertIn("COLOUR_CHANGE", [r["rule"] for r in risk["rules_fired"]])
 
-    def test_persistent_condition_rule(self):
+    def test_persistent_condition_rule_blocked_while_classifier_parked(self):
+        """surface_predictions is false, so no rule may use classifier output."""
         pred = {"class_name": "gingivitis", "probability": 0.95}
+        self.assertFalse(CFG["classification"]["surface_predictions"])
         risk = stratify(change_report(1000, 1000), pred, dict(pred), cfg=CFG)
+        self.assertEqual(risk["rules_fired"], [])
+        self.assertEqual(risk["band"], LOW)
+
+    def test_persistent_condition_rule_fires_when_switch_on(self):
+        pred = {"class_name": "gingivitis", "probability": 0.95}
+        cfg = copy.deepcopy(CFG)
+        cfg["classification"]["surface_predictions"] = True
+        risk = stratify(change_report(1000, 1000), pred, dict(pred), cfg=cfg)
         self.assertEqual([r["rule"] for r in risk["rules_fired"]], ["PERSISTENT_CONDITION"])
         self.assertEqual(risk["band"], MODERATE)
 
@@ -302,10 +313,20 @@ class TestReportLanguage(unittest.TestCase):
             assert_no_diagnostic_language(self, risk["text"])
             self.assertIn("screening aid", text.lower())
 
-    def test_condition_is_phrased_as_signs_not_diagnosis(self):
+    def test_no_classifier_output_while_parked(self):
         pred = {"class_name": "calculus", "probability": 0.88}
         risk = stratify(change_report(1000, 1000), cfg=CFG)
-        text = build_report("pair_test", change_report(1000, 1000), risk, pred, pred)
+        text = build_report("pair_test", change_report(1000, 1000), risk, pred, pred, cfg=CFG)
+        self.assertNotIn("calculus", text.lower())
+        self.assertNotIn("signs consistent with", text)
+        self.assertIn("Condition screening is switched off", text)
+
+    def test_condition_is_phrased_as_signs_not_diagnosis_when_switch_on(self):
+        pred = {"class_name": "calculus", "probability": 0.88}
+        cfg = copy.deepcopy(CFG)
+        cfg["classification"]["surface_predictions"] = True
+        risk = stratify(change_report(1000, 1000), cfg=cfg)
+        text = build_report("pair_test", change_report(1000, 1000), risk, pred, pred, cfg=cfg)
         self.assertIn("signs consistent with", text)
 
     def test_context_note_is_general_not_personal(self):

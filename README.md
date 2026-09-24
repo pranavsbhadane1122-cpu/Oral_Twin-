@@ -91,3 +91,11 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   **exclude the edge/compactness metric**, which is known to be
   resampling-sensitive (35% false-flag rate) and must not reach user-facing
   output until reformulated.
+- **Phase 8 (on-device feasibility + demo) is scoped to the validated modules
+  only** (2026-09-24). The classifier is parked and segmentation/OPMD are blocked
+  on external data, so the demo covers alignment (Phase 4) and change detection
+  (Phase 5), with explainability and risk output that do not depend on the parked
+  classifier. `classification.surface_predictions` is false: while it is, no
+  classifier prediction reaches any user-facing string and the
+  PERSISTENT_CONDITION risk rule cannot fire. The demo states its own gaps on
+  screen rather than hiding them.

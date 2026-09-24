@@ -115,7 +115,10 @@ def evaluate_rules(change_report, prediction_visit1=None, prediction_visit2=None
                 f"{cfg['delta']['relative_color_thresh']})",
             ))
 
-    p1, p2 = prediction_visit1 or {}, prediction_visit2 or {}
+    # the classifier is parked: while surface_predictions is false no rule may
+    # depend on its output, so PERSISTENT_CONDITION cannot fire at all
+    surface = cfg["classification"].get("surface_predictions", False)
+    p1, p2 = (prediction_visit1 or {}, prediction_visit2 or {}) if surface else ({}, {})
     persistent = [c.lower() for c in rcfg["persistent_conditions"]]
     threshold = rcfg["condition_prob_high"]
     same = (p1.get("class_name") and p1.get("class_name") == p2.get("class_name"))
