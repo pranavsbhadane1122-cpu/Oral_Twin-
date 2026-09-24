@@ -64,6 +64,21 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+demo:
+  # Phase 8 demo. Sample pairs come from data/longitudinal (read-only input).
+  sample_pairs:
+    good: pair_0058
+    out_of_frame: pair_0014
+  # two photographs of DIFFERENT mouths: alignment should not find a real match
+  low_confidence_classes: [gingivitis, caries]
+  # a photograph that is not a mouth at all, as a negative control
+  unrelated_asset: docs/demo_assets/unrelated_keyboard.jpg
+  placeholder_mask:
+    blur_sigma: 1.5
+    deviation_percentile: 92.0   # pixels furthest from the dominant tissue colour
+    morph_kernel: 5
+    max_regions: 3
+
 explain:
   # "auto" resolves to the last 4-D (spatial) layer of the MobileNetV2 base at
   # runtime; on the current model that is out_relu (7x7x1280), the standard
