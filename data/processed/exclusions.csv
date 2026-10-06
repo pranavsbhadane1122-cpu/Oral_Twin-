@@ -1,0 +1,23 @@
+dataset,path,reason,counterpart_dataset,counterpart_path,evidence_ncc,evidence_ransac_inliers,phash_threshold,verified_on
+mio,SANO/511 - SI.png,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",oral_diseases,Gingivitis/Gingivitis/(91).jpg,0.9277,296,8,2026-10-06
+mio,SANO/514 - SI.png,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",oral_diseases,Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Data/images/train/(126).jpg,0.9488,265,8,2026-10-06
+mio,SANO/515 - SI.png,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",oral_diseases,Gingivitis/Gingivitis/(91).jpg,0.9324,297,8,2026-10-06
+oral_diseases,Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Data/images/train/(126).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Data/images/train/(44).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Caries_Gingivitus_ToothDiscoloration_Ulcer-yolo_annotated-Dataset/Data/images/train/(83).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(154).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(2149).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9206,235,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(2166).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/511 - SI.png,0.9000,242,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(2226).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9206,235,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(2307).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9206,235,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(235).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(331).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9325,136,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(348).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/511 - SI.png,0.9031,113,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(411).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9325,136,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(492).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9325,136,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(591).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9441,182,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(608).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/515 - SI.png,0.9319,188,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(671).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9441,182,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(74).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9488,265,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(752).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/514 - SI.png,0.9441,182,8,2026-10-06
+oral_diseases,Gingivitis/Gingivitis/(91).jpg,"label conflict: clinician-labelled healthy vs Kaggle gingivitis, same scene",mio,SANO/515 - SI.png,0.9324,297,8,2026-10-06

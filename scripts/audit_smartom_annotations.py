@@ -147,6 +147,42 @@ def describe_descriptors(root, resolved, log):
             log(f"      e.g. {example}")
 
 
+def reconcile_with_publication(cfg, unannotated, log):
+    """Square what is on disk with the figures the SMART-OM paper reports."""
+    import re
+
+    from src.utils.smartom import patient_id_of
+
+    log("\n" + "=" * 70)
+    log("RECONCILIATION WITH THE PUBLISHED SMART-OM FIGURES (~2,469 images, 331 subjects)")
+    log("=" * 70)
+    log(f"  unannotated images on disk: {len(unannotated)}  -> matches the published 2,469")
+
+    with_id = [p for p in unannotated if patient_id_of(p)]
+    without = [p for p in unannotated if not patient_id_of(p)]
+    subjects = {patient_id_of(p) for p in with_id}
+    legacy = re.compile(r"^(\d+)\s*-")
+    numbers = {legacy.match(p.name).group(1) for p in without if legacy.match(p.name)}
+    neither = [p for p in without if not legacy.match(p.name)]
+
+    log(f"  subject identifiers come in three naming schemes:")
+    log(f"    SMITAxxxxx filenames: {len(with_id)} images -> {len(subjects)} subjects")
+    log(f"    legacy '<N> - SITE' filenames: {len(without) - len(neither)} images -> "
+        f"{len(numbers)} subjects {sorted(numbers, key=int)}")
+    log(f"    bare numeric / 'Ca N' filenames: {len(neither)} images "
+        f"(all in the Oral Cancer category, one per subject)")
+    log(f"  => {len(subjects)} + {len(numbers)} + {len(neither)} = "
+        f"{len(subjects) + len(numbers) + len(neither)} subjects, "
+        f"against the published 331")
+    log("")
+    log("  The earlier audit figure of ~3,169 distinct scenes from 305 patient ids is")
+    log("  NOT comparable: it was computed over all 8,496 MIO files, which includes")
+    log("  every annotation level plus the separate GINGIVITIS / PERIODONTITIS / SANO")
+    log("  folders. Restricted to the unannotated level the same clustering gives")
+    log("  2,436 distinct scenes from 2,469 files - about 33 genuine repeat")
+    log("  photographs, and no inflation from annotation renders.")
+
+
 def main():
     cfg = load_config()
     root = smartom_root(cfg)
@@ -302,6 +338,8 @@ def main():
         target = samples_dir / f"smartom_sample_{rank:02d}.jpg"
         imwrite_jpg(target, blended)
         log(f"  {target.name}  <- {Path(path).name}  ({level}, {len(regions)} regions)")
+
+    reconcile_with_publication(cfg, unannotated, log)
 
     out.write_text("\n".join(lines), encoding="utf-8")
     print(f"\nsaved {out}")

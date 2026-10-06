@@ -64,6 +64,17 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+licence:
+  # Piyarathne is CC BY-NC-ND 4.0: no derivatives may be redistributed, so none
+  # of its images may reach anything we publish. MIO is CC-BY-4.0, so paper
+  # figures and demo samples come from MIO / SMART-OM.
+  restricted_datasets: [piyarathne_oral]
+  publishable_dirs:
+    - docs/paper/figures
+    - docs/demo_assets
+    - app
+  phash_threshold: 8
+
 smartom:
   # SMART-OM stores each photograph again at every annotation level with the
   # annotations BURNED INTO THE PIXELS. Training on those would teach
