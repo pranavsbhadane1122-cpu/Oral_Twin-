@@ -228,8 +228,14 @@ perceptually matches an excluded original.
    assessable. Polygon shape (extent, aspect) was tested as a refinement and does
    not separate them either. Identifying these needs human review, not geometry.
    The audit is kept in `data/processed/label_audit.csv` as a diagnostic.
-7. **`N-226-01` carries a degenerate oral-cavity polygon of zero area**, despite
-   having three lesion polygons. One malformed annotation out of 3,000.
+7. **Two images carry a degenerate oral-cavity polygon of zero area**:
+   `N-226-01`, which was found during the annotation audit and has three lesion
+   polygons regardless, and `C-24-7-5`, found when the Phase 3 segmentation cache
+   was rasterised (2026-10-06). Both rasterise to an empty cavity channel. Two
+   malformed annotations out of 3,000. The second one only surfaced because the
+   cache builder counts empty masks rather than assuming the first was the only
+   one - worth remembering before treating any single-case data defect as
+   isolated.
 8. **Every OPMD and OCA image carries at least one lesion polygon** - the
    "labelled refer but no lesion annotated" failure mode does not occur in this
    dataset, and Healthy is its exact complement at 729/729 with none. Label noise
@@ -240,9 +246,14 @@ perceptually matches an excluded original.
    `Verucouss Ca`, `Verrucopappilary Lesion`, `Depaillation With Leukoplakia`,
    `OLP/LR` vs `OLP/ LR` vs `OLP /LR`. Any subtype analysis must normalise by
    token rather than by exact string, as `scripts/opmd_subtype_analysis.py`
-   does. Alongside S-184-01 (unassessable) and N-226-01 (degenerate polygon),
-   this is the third data-quality finding in this dataset.
+   does. Alongside S-184-01 (unassessable) and the two degenerate polygons
+   (N-226-01, C-24-7-5), this is the third data-quality finding in this dataset.
 10. **A model has now been trained on these splits** (binary referral, 2026-10-06)
    and failed its acceptance gate. See `models/logs/experiments.md`.
+11. **The Phase 3 segmenter reuses these splits unchanged.** No re-splitting, no
+   re-balancing; `tests/test_segmentation.py` asserts that no patient crosses a
+   split in the manifests the segmentation cache is built from. The cache holds
+   2,999 of the 3,000 images - `N-260-01` is truncated and unreadable, as it was
+   in every earlier phase.
 
 *OralTwin is a screening aid, not a diagnostic tool.*
