@@ -146,3 +146,93 @@ by a dentist.*
 
 *OralTwin is a screening aid, not a diagnostic tool — findings must be checked
 by a dentist.*
+
+## 2026-10-06 - Phase 2 retrain: Piyarathne binary referral (GATE FAILED)
+
+**Task.** `classification.task: binary_referral` - refer = OPMD + OCA,
+no_refer = Healthy + Benign. Rationale: OralTwin is a screening aid that never
+names a diagnosis, so "does this need a dentist to look at it" is the task it
+actually performs; it is also far better powered than the 4-class OCA cell,
+which holds 19 test images.
+
+**Split provenance.** Piyarathne, patient-disjoint, 714 patients, built by
+`scripts/build_splits.py` and documented in `data/processed/SPLIT_DESIGN.md`.
+Train 2099 / val 451 / test 449 (one OPMD image is truncated in the source and
+is absent). No patient appears in two splits (`tests/test_splits.py`).
+
+**Config.** Unchanged from Phase 2 otherwise: MobileNetV2 ImageNet init, two
+stages (frozen base at lr 1e-3, then last 30 layers at 1e-4), class weights,
+dropout 0.3, EarlyStopping patience 5 on val_loss. Images from a 224px cache.
+
+**Trained locally on CPU, NOT on Colab.** The brief asked for a Colab bundle,
+but the Piyarathne dataset is CC BY-NC-ND: no derivatives may be redistributed,
+and uploading the images (or the 224px cache derived from them) to Google would
+be exactly that. Training stayed on the machine; no conversion step was needed,
+so the "reproduce the Colab metrics after conversion" check does not apply.
+Early stopping fired at stage-b epoch 7, restoring epoch 2.
+
+### Gate results - two of three fail
+
+| Gate | Result | Target | Verdict |
+|---|---|---|---|
+| (a) performance | accuracy 0.630 [0.585, 0.674] | report honestly | reported |
+| | sensitivity 0.491 [0.427, 0.556] | - | **misses half of referrals** |
+| | specificity 0.774 [0.714, 0.824] | - | - |
+| (b) Grad-CAM on tissue | **6/10** | >= 8/10 | **FAIL** |
+| (c) warp stability | 0.902 [0.871, 0.926] | >= 0.90 | PASS (point estimate only) |
+
+PPV 0.691 [0.616, 0.757], NPV 0.596 [0.538, 0.651]. Confusion: TP 112, FP 50,
+FN 116, TN 171. **116 of 228 cases needing referral were not referred.**
+
+Breakdown by original category (95% Wilson intervals):
+
+| category | n | handled correctly | note |
+|---|---:|---|---|
+| Healthy | 109 | 0.798 [0.713, 0.863] | not referred |
+| Benign | 112 | 0.750 [0.662, 0.821] | not referred |
+| OPMD | 209 | 0.464 [0.398, 0.532] | referred |
+| OCA | 19 | 0.789 [0.567, 0.915] | referred - UNDERPOWERED, interval spans 0.35 |
+
+### Gate (b) in detail - stratified and scored blind
+
+10 cases, 5 per true class, categories spread within each class. The panel images
+carry only a case number; the true class, prediction and probability were held in
+key.json and read only after the verdicts were written. Scored by TRUE class.
+
+| case | true class | category | verdict | where the attention fell |
+|---|---|---|---|---|
+| 01 | no_refer | Benign | FAIL | the finger retracting the lip, and the nostril |
+| 02 | refer | OPMD | PASS | labial / alveolar mucosa |
+| 03 | refer | OCA | PASS | intraoral lesion and teeth |
+| 04 | refer | OCA | FAIL | lower lip vermilion and the black frame edge |
+| 05 | refer | OCA | PASS | carious tooth and surrounding mucosa |
+| 06 | no_refer | Healthy | PASS | dorsal tongue |
+| 07 | no_refer | Benign | PASS | hard palate |
+| 08 | refer | OPMD | FAIL | moustache and chin - the photograph has no intraoral view at all |
+| 09 | no_refer | Benign | FAIL | dark background at the frame edge |
+| 10 | no_refer | Healthy | PASS | floor of mouth, bleeding onto the lip |
+
+By true class: refer 3/5, no_refer 3/5 - the failures are not concentrated in one
+class. Verdicts were made by the AI assistant, unblinded as to its own earlier
+work though blind to the model's predictions; a clinician should re-score them.
+
+**Data-quality finding:** case 08 (`S-184-01.jpg`, labelled OPMD) is a
+photograph of a closed mouth with no intraoral content. The model called it
+no_refer with p=0.92. At least one labelled image in the dataset cannot support
+its label.
+
+### Outcome
+
+**The Grad-CAM gate failed (6/10 against >= 8/10), so work stopped there.**
+Nothing was tuned to make it pass. External validation on SMART-OM was NOT run -
+the brief places it after the gate, never before - and `data/longitudinal` has
+not yet been regenerated. `classification.surface_predictions` stays false.
+
+Reading the three gates together: the model is stable under re-framing, but it
+refers barely half the cases that need referring and only 6 of 10 heatmaps sit on
+oral tissue. It is not a shortcut learner in the Phase 2 sense - no single
+provenance cue is doing the work - it is simply weak, and attending to fingers,
+frame edges and lips often enough to matter.
+
+*OralTwin is a screening aid, not a diagnostic tool - findings must be checked by
+a dentist.*

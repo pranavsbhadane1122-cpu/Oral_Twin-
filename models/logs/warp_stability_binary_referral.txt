@@ -1,0 +1,18 @@
+======================================================================
+WARP STABILITY - binary_referral (test split)
+======================================================================
+
+Each image is re-framed by a small random homography (rotation +/-8
+degrees, scale 0.92-1.08, shift +/-3%) and the predicted class is
+compared before and after.
+
+  stability  0.902 [0.871, 0.926] (405/449)
+  target     >= 0.90
+  verdict    PASS
+  flipped    44 of 449
+
+  by original category:
+    Benign     0.902 [0.833, 0.944] (101/112)
+    Healthy    0.899 [0.828, 0.943] (98/109)
+    OCA        0.947 [0.754, 0.991] (18/19)
+    OPMD       0.900 [0.851, 0.933] (188/209)

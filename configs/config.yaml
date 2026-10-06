@@ -19,6 +19,28 @@ classification:
   # false no classifier prediction may reach any user-facing string, and the
   # PERSISTENT_CONDITION risk rule is disabled.
   surface_predictions: false
+  # Phase 2 retrain runs the task OralTwin actually performs: a screening aid
+  # never names a diagnosis, so the question is "does this need a dentist to look
+  # at it". It is also far better powered than the 4-class OCA cell (n=19).
+  task: binary_referral
+  tasks:
+    binary_referral:
+      classes: [no_refer, refer]
+      mapping:
+        Healthy: no_refer
+        Benign: no_refer
+        OPMD: refer
+        OCA: refer
+    four_class:
+      classes: [Healthy, Benign, OPMD, OCA]
+      mapping:
+        Healthy: Healthy
+        Benign: Benign
+        OPMD: OPMD
+        OCA: OCA
+  # 224px copies of the Piyarathne images, made once so training does not decode
+  # 4000x3000 JPEGs every epoch. Derived images stay local (CC BY-NC-ND).
+  piyarathne_cache: data/processed/piyarathne_224
   max_class_ratio: 2.0
   learning_rate: 0.001
   fine_tune_lr: 0.0001

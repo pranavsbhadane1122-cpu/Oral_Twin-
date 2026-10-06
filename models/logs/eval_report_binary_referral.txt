@@ -1,0 +1,40 @@
+==========================================================================
+EVALUATION - binary_referral (test split)
+==========================================================================
+
+model: models\classifier_binary_referral.h5
+split: Piyarathne, patient-disjoint (see data/processed/SPLIT_DESIGN.md)
+images: 449
+
+Every rate carries a 95% Wilson interval. At these sample sizes a point
+estimate on its own would overstate what the data supports.
+
+PRIMARY - binary referral
+
+  accuracy     0.630 [0.585, 0.674] (283/449)
+  sensitivity  0.491 [0.427, 0.556] (112/228)   (of cases needing referral, how many were referred)
+  specificity  0.774 [0.714, 0.824] (171/221)   (of cases not needing referral, how many were spared)
+  PPV          0.691 [0.616, 0.757] (112/162)
+  NPV          0.596 [0.538, 0.651] (171/287)
+
+  confusion: TP 112  FP 50  FN 116  TN 171
+
+  missed referrals: 116 of 228 (50.9% of cases that needed one)
+
+SECONDARY - breakdown by original category
+
+  category       n  handled correctly                  note
+  Benign       112  0.750 [0.662, 0.821] (84/112)      not referred
+  Healthy      109  0.798 [0.713, 0.863] (87/109)      not referred
+  OCA           19  0.789 [0.567, 0.915] (15/19)       referred  UNDERPOWERED (n=19); interval spans 0.35
+  OPMD         209  0.464 [0.398, 0.532] (97/209)      referred
+
+  The OCA cell is the cancer sensitivity estimate and it is small by
+  design: patient-disjoint splitting left 19 OCA images in test. Read
+  its interval, not its point estimate.
+
+confusion matrix (rows true, cols predicted): ['no_refer', 'refer']
+[[171  50]
+ [116 112]]
+
+OralTwin is a screening aid, not a diagnostic tool. Have any finding checked by a dentist.
