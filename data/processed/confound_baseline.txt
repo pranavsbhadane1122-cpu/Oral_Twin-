@@ -1,0 +1,33 @@
+CONFOUND BASELINE - SMART-OM Oral Cancer from acquisition metadata alone
+The classifier sees no image content: only file extension and EXIF presence.
+
+images: 2469   Oral Cancer: 20   other: 2449
+features: is_png, has_exif
+
+raw contingency:
+  is_png=0:  2461 images,  12 of them Oral Cancer
+  is_png=1:     8 images,   8 of them Oral Cancer
+  has_exif=0:    78 images,  14 of them Oral Cancer
+  has_exif=1:  2391 images,   6 of them Oral Cancer
+
+5-fold stratified cross-validation, metrics pooled over the held-out folds:
+  accuracy  0.9951
+  precision 1.0000   (of images called Oral Cancer, how many are)
+  recall    0.4000   (of Oral Cancer images, how many are found)
+  F1        0.5714
+  confusion: TP 8  FP 0  FN 12  TN 2449
+
+  for scale: always predicting 'not cancer' scores accuracy 0.9919 with recall 0.000
+
+the rule it learns, in full:
+  |--- is_png <= 0.50
+  |   |--- has_exif <= 0.50
+  |   |   |--- class: 0
+  |   |--- has_exif >  0.50
+  |   |   |--- class: 0
+  |--- is_png >  0.50
+  |   |--- class: 1
+
+INTERPRETATION: acquisition metadata alone recovers 40% of the Oral Cancer class at 100% precision - a weaker shortcut than the file-level audit suggested, but still present and still a reason to keep the subset out of headline figures.
+
+This baseline is evidence for the paper, not a model that is kept.

@@ -73,6 +73,18 @@ def load_exclusions(cfg, log=print):
             elif dcfg["exclude_synthetic"] and score >= dcfg["synthetic_score_thresh"]:
                 excluded.add(path)
                 reasons["drawn/texture-free"] += 1
+
+    # images ruled out by hand, each with its evidence recorded in the CSV
+    manual = PROJECT_ROOT / cfg["paths"]["processed"] / "exclusions.csv"
+    if manual.exists():
+        with open(manual, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                rel = f"{row['dataset']}/{row['path']}".replace("\\", "/")
+                if rel not in excluded:
+                    excluded.add(rel)
+                    reasons[row["reason"][:48]] += 1
+    else:
+        log(f"  WARNING: {manual.name} not found; no manual exclusions applied")
     return excluded, reasons
 
 
