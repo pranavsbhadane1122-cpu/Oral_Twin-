@@ -57,6 +57,20 @@ segmentation:
   img_size: 256
   batch_size: 16
   epochs: 50
+  # Phase 3. Ground truth is the Piyarathne polygon set: 3,000 Oral Cavity and
+  # 3,358 Lesion polygons, explicitly typed. Splits are the existing
+  # patient-disjoint ones; nothing about them changes here.
+  channels: [oral_cavity, lesion]
+  cache: data/processed/segmentation_256
+  base_filters: 16          # modest: this trains on CPU
+  depth: 4
+  learning_rate: 0.001
+  early_stop_patience: 6
+  bce_weight: 0.5           # loss = bce_weight * BCE + (1 - bce_weight) * Dice
+  augment:
+    rotation_deg: 10
+    zoom: 0.1
+    brightness: 0.1
 
 split:
   train: 0.70
