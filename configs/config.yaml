@@ -64,6 +64,20 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+smartom:
+  # SMART-OM stores each photograph again at every annotation level with the
+  # annotations BURNED INTO THE PIXELS. Training on those would teach
+  # "drawn outline = disease". src/utils/smartom.py is the only sanctioned
+  # reader and returns the unannotated level exclusively.
+  root: data/raw/mio/SMART-OM
+  unannotated_level: "01. Unannotated"
+  annotated_levels_blocked: true
+  categories:
+    - "01. Normal"
+    - "02. Variation from normal"
+    - "03. OPMD"
+    - "04. Oral Cancer"
+
 audit:
   # Phase 1 completion audit of the newly arrived datasets. Read-only on data/raw.
   # Measured sweep on MIO: at 10 the clusters chain (largest 364 images spanning

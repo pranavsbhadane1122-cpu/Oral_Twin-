@@ -63,6 +63,37 @@ All paths and hyperparameters live in `configs/config.yaml` — never hard-coded
   it and continue. The restart runbook for the Piyarathne et al. dataset is in
   `docs/paper/classifier_findings.md`.
 
+## Known data traps
+
+Each of these lets a model score well without reading pathology. They are
+enforced in code, not left to discipline.
+
+1. **Burned-in annotations (SMART-OM).** Every photograph is stored again under
+   "02. Region annotation", "03. Full annotation" and "04. Lesion annotation"
+   with the annotation drawn into the pixels, directly over the lesion the label
+   refers to. Training on those levels teaches "drawn outline = disease".
+   *Enforced by:* `src/utils/smartom.py` is the only sanctioned reader and
+   returns "01. Unannotated" exclusively; `configs/config.yaml`
+   `smartom.annotated_levels_blocked: true`; `tests/test_smartom_guard.py`.
+   Note the categories are numbered `02.`/`03.`/`04.` as well, so the block
+   targets annotation level *names*, not numeric prefixes.
+2. **Illustrations and augmentation families (Kaggle oral_diseases).** The caries
+   class was ~85% augmented copies of a few base photographs and mixed cartoon
+   illustrations with clinical photographs, letting the model separate classes by
+   provenance. *Enforced by:* `src/utils/detect_synthetic.py` plus family
+   collapsing and per-class caps in `src/utils/prepare_classification.py`.
+3. **Resolution and provenance between sources.** A random forest on 64x64
+   downsamples identifies which dataset an image came from 82% of the time
+   (chance 33%), and Piyarathne alone at 97% recall; the earlier
+   healthy-vs-cancer zip separated its classes by file size alone.
+   *Enforced by:* `scripts/provenance_probe.py`, re-run whenever sources change.
+4. **Label conflicts between sources.** Three MIO `SANO` (healthy) photographs are
+   the same scenes as 19 Kaggle images labelled `Gingivitis`.
+   *Enforced by:* `data/processed/exclusions.csv`, applied at dataset assembly.
+5. **Licence contamination.** Piyarathne images are CC BY-NC-ND: no derivatives
+   may be redistributed, so none may reach `docs/paper/figures/` or the demo.
+   *Enforced by:* `tests/test_licence_guard.py`.
+
 ## Plan deviations
 
 - **Phase 4 (alignment) is being built before Phase 3 (segmentation).** Phase 3's
