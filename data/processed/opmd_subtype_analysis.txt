@@ -1,0 +1,72 @@
+==============================================================================
+OPMD SUBTYPE ANALYSIS - does resolution explain the weak sensitivity?
+==============================================================================
+
+model: classifier_binary_referral.h5 (already trained; nothing retrained here)
+input resolution: 224x224
+Every image below is in the referral class, so sensitivity is simply the
+share predicted 'refer'. Rates carry 95% Wilson intervals.
+
+referral images in the test split: 228
+
+GROUPING RULE (stated so it can be disagreed with)
+  distinctive patch : a discrete colour change - white plaque, red patch, or
+                      exophytic warty mass. Tokens: leukoplakia, erythroplakia, erythroleukoplakia, pvl / verrucous, oral cancer
+  fine texture      : striae, blanching or fibrous bands rather than a
+                      coloured patch. Tokens: osf, olp / lichenoid
+  neither (mixed)   : the diagnosis names BOTH kinds, so it cannot test the
+                      hypothesis either way
+  neither (unclass.): no token matched
+
+PER-SUBTYPE SENSITIVITY (sorted by n)
+     n  sensitivity                    group                  diagnosis
+    92  0.533 [0.431, 0.631] (49/92)   fine texture           OSF
+    65  0.446 [0.332, 0.567] (29/65)   fine texture           OLP
+    19  0.789 [0.567, 0.915] (15/19)   distinctive patch      Oral Cancer
+     9  0.444 [0.189, 0.733] (4/9)     distinctive patch      Leukoplakia
+     8  0.250 [0.071, 0.591] (2/8)     fine texture           OLP/LR
+     4  0.500 [0.150, 0.850] (2/4)     distinctive patch      Erythroplakia
+     4  0.250 [0.046, 0.699] (1/4)     distinctive patch      Leukplakia
+     4  0.250 [0.046, 0.699] (1/4)     fine texture           OLP /LR
+     3  0.667 [0.208, 0.939] (2/3)     fine texture           OLP (Erosive)
+     2  0.500 [0.095, 0.905] (1/2)     neither (mixed)        OSF+Leukoplakia
+     2  1.000 [0.342, 1.000] (2/2)     neither (mixed)        Leukoplakia + OSF
+     2  0.000 [0.000, 0.658] (0/2)     distinctive patch      Verrucous Hyperplasia
+     2  0.500 [0.095, 0.905] (1/2)     distinctive patch      Veruco Papillary Lesion
+     2  0.000 [0.000, 0.658] (0/2)     distinctive patch      Verrucopappilary Lesion
+     2  0.500 [0.095, 0.905] (1/2)     distinctive patch      Erythroplkia
+     2  0.000 [0.000, 0.658] (0/2)     fine texture           Candidiasis+ OSF
+     1  1.000 [0.207, 1.000] (1/1)     distinctive patch      Erythroleukoplakia
+     1  1.000 [0.207, 1.000] (1/1)     neither (mixed)        OSF + Leukoplakia
+     1  0.000 [0.000, 0.793] (0/1)     fine texture           Desquamative Gingivitis + OLP
+     1  0.000 [0.000, 0.793] (0/1)     fine texture           Oral Submucous Fibrosis
+     1  0.000 [0.000, 0.793] (0/1)     neither (mixed)        Erythroplakia In Background Of OSF
+     1  0.000 [0.000, 0.793] (0/1)     distinctive patch      Depaillation With Leukoplakia
+
+GROUP TOTALS
+  distinctive patch        0.543 [0.402, 0.678] (25/46)
+      made of: {'Leukoplakia': 9, 'Oral Cancer': 19, 'Erythroplakia': 4, 'Erythroleukoplakia': 1, 'Verrucous Hyperplasia': 2, 'Depaillation With Leukoplakia': 1, 'Leukplakia': 4, 'Veruco Papillary Lesion': 2, 'Verrucopappilary Lesion': 2, 'Erythroplkia': 2}
+  fine texture             0.472 [0.399, 0.545] (83/176)
+      made of: {'OLP': 65, 'OSF': 92, 'OLP/LR': 8, 'OLP (Erosive)': 3, 'Desquamative Gingivitis + OLP': 1, 'Oral Submucous Fibrosis': 1, 'Candidiasis+ OSF': 2, 'OLP /LR': 4}
+  neither (mixed)          0.667 [0.300, 0.903] (4/6)
+      made of: {'OSF+Leukoplakia': 2, 'Leukoplakia + OSF': 2, 'OSF + Leukoplakia': 1, 'Erythroplakia In Background Of OSF': 1}
+
+THE CRITERION
+  distinctive patch 0.543 [0.402, 0.678] n=46
+  fine texture      0.472 [0.399, 0.545] n=176
+  gap               +0.072 (+7.2 points)
+  intervals overlap: yes
+
+  CRITERION NOT MET - the distinctive-patch group does not score
+  materially higher than the fine-texture group, so there is no
+  evidence that downsampling is what is costing sensitivity. Do not
+  retrain at higher resolution on this evidence.
+
+  criterion_met=False
+
+  SENSITIVITY CHECK - patch group with Oral Cancer removed:
+    white/red/verrucous patches only  0.370 [0.215, 0.558] n=27
+    fine texture                      0.472 [0.399, 0.545] n=176
+    => the patch group is LOWER than fine texture once the
+       frank cancers are excluded, so the apparent patch advantage
+       is carried by Oral Cancer (0.789), not by patch-ness.

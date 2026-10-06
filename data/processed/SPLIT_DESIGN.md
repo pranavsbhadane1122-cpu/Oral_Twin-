@@ -215,6 +215,26 @@ perceptually matches an excluded original.
    change-detection validation, neither of which is a learned model, so no
    training leakage follows — but they should be regenerated before Track B is
    trained on and evaluated end to end.
-5. **Nothing here has been trained.** Training is the next decision, not this one.
+5. **~1% of the referral class is genuinely unassessable.** A visual audit of 30
+   flagged images found about three that cannot support their label -
+   `S-184-01` (closed mouth, no intraoral view), `N-279-09` (perioral shot only)
+   and arguably `S-158-02` (a sliver of labial mucosa behind an instrument).
+   Extrapolated, roughly 15 of 1,523 referral images. Not excluded: the decision
+   is the project owner's and the quantity does not affect conclusions.
+6. **The minimal-view flag rule was tested and rejected.** Flagging the bottom
+   decile of oral-cavity area caught 156 images (10.2% of the referral class) but
+   only ~10-15% of those genuinely fail to support their label - the rule
+   measures how far away the photographer stood, not whether the mouth is
+   assessable. Polygon shape (extent, aspect) was tested as a refinement and does
+   not separate them either. Identifying these needs human review, not geometry.
+   The audit is kept in `data/processed/label_audit.csv` as a diagnostic.
+7. **`N-226-01` carries a degenerate oral-cavity polygon of zero area**, despite
+   having three lesion polygons. One malformed annotation out of 3,000.
+8. **Every OPMD and OCA image carries at least one lesion polygon** - the
+   "labelled refer but no lesion annotated" failure mode does not occur in this
+   dataset, and Healthy is its exact complement at 729/729 with none. Label noise
+   is therefore not the explanation for weak model sensitivity.
+9. **A model has now been trained on these splits** (binary referral, 2026-10-06)
+   and failed its acceptance gate. See `models/logs/experiments.md`.
 
 *OralTwin is a screening aid, not a diagnostic tool.*

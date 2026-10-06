@@ -236,3 +236,44 @@ frame edges and lips often enough to matter.
 
 *OralTwin is a screening aid, not a diagnostic tool - findings must be checked by
 a dentist.*
+
+## 2026-10-06 - OPMD subtype analysis: resolution hypothesis NOT supported
+
+Free re-score of the existing binary-referral model's test predictions against
+the Clinical Diagnosis column. No retraining.
+
+**Grouping** (by token, because the column is free text with many spellings -
+Leukplakia, Leukopakia, Erythroplkia, Verucouss Ca):
+  distinctive patch - leukoplakia, erythroplakia, erythroleukoplakia, PVL /
+                      verrucous, oral cancer. A discrete colour change or
+                      exophytic mass, which should survive downsampling.
+  fine texture      - OSF, OLP / lichenoid / DLE. Striae, blanching and fibrous
+                      bands, which downsampling is most likely to erase.
+  neither (mixed)   - names both kinds, so it cannot test the hypothesis.
+
+**Per-subtype sensitivity** (test split, n=228 referral images):
+
+| n | sensitivity | group | diagnosis |
+|---:|---|---|---|
+| 92 | 0.533 [0.431, 0.631] | fine texture | OSF |
+| 65 | 0.446 [0.332, 0.567] | fine texture | OLP |
+| 19 | 0.789 [0.567, 0.915] | distinctive patch | Oral Cancer |
+| 9 | 0.444 [0.189, 0.733] | distinctive patch | Leukoplakia |
+| 8 | 0.250 [0.071, 0.591] | fine texture | OLP/LR |
+| 4 | 0.500 [0.150, 0.850] | distinctive patch | Erythroplakia |
+
+**Criterion:** distinctive patch 0.543 [0.402, 0.678] n=46 against fine texture
+0.472 [0.399, 0.545] n=176. Gap +7.2 points, intervals overlap heavily.
+**CRITERION NOT MET - no retrain at 384x384.**
+
+**Sensitivity check that settles it.** Removing Oral Cancer from the patch group
+drops it to **0.370 [0.215, 0.558] (n=27), BELOW the fine-texture group's 0.472**.
+The apparent patch advantage is carried entirely by frank cancer - the most
+grossly abnormal images in the set, which any resolution would show. White, red
+and verrucous patches are if anything handled *worse* than striae and blanching.
+The resolution hypothesis is not merely unsupported; the data point the other way.
+
+The model is weak across every subtype, with only frank cancer handled at all
+well. Nothing was retrained; `surface_predictions` stays false.
+
+*OralTwin is a screening aid, not a diagnostic tool.*
