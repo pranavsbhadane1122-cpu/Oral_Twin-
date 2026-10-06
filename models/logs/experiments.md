@@ -277,3 +277,72 @@ The model is weak across every subtype, with only frank cancer handled at all
 well. Nothing was retrained; `surface_predictions` stays false.
 
 *OralTwin is a screening aid, not a diagnostic tool.*
+
+## 2026-10-06 - External validation and housekeeping (Track C closed)
+
+### External validation on SMART-OM
+
+**External validation of a model that failed its acceptance gate; reported for
+completeness, not as a performance claim.**
+
+OPMD vs Normal, coarse labels, 2,270 images never seen in training. The
+confounded Oral Cancer subset was refused by `assert_scoreable()` as designed.
+
+| metric | value (95% CI) |
+|---|---|
+| accuracy | 0.915 [0.902, 0.925] (2076/2270) |
+| sensitivity | **0.072 [0.038, 0.131]** (9/125 OPMD referred) |
+| specificity | 0.964 [0.955, 0.971] (2067/2145) |
+| PPV | 0.103 [0.055, 0.185] |
+
+Confusion: TP 9, FP 78, FN 116, TN 2067.
+
+**Internal 0.491 -> external 0.072, a fall of 41.9 points, and the external
+interval excludes the internal figure.** This is not a consistently weak model
+that transfers its mediocrity: the weak signal collapses almost entirely on
+photographs from another clinic. It refers 9 of 125 OPMD cases.
+
+The 0.915 accuracy is an artefact of base rate - SMART-OM is 94.5% Normal, so a
+model that says "no referral" to almost everything scores well on accuracy while
+being useless at the task. Accuracy must never be quoted for this dataset.
+
+### Longitudinal pairs regenerated, Phase 4 and 5 re-verified
+
+`data/longitudinal` was stale (built from an earlier Track B test split). It was
+regenerated from the current split, with delta masks rebuilt, and both validation
+suites re-run on the new pairs.
+
+| metric | published | regenerated | drift |
+|---|---|---|---|
+| pairs aligned | 200/200 | 200/200 | none |
+| median corner error | 1.17 px | 1.18 px | none |
+| corner error under 10px | - | 98.5% | - |
+| **r(confidence, corner error)** | **-0.516** | **-0.387** | **regression; misses the <= -0.50 target** |
+| delta recall on injected change | 100% | 100% | none |
+| delta area false-change | 1.0% | 0.0% | improved |
+| delta colour false-flag | 4.1% | 3.2% | improved |
+| delta MAE | 1.75 pp | 1.51 pp | improved |
+| out-of-frame caught | 13/13 | 17/17 | none |
+| edge false-flag (known weak) | 35.1% | 30.9% | improved |
+
+**The one regression is the alignment confidence-error correlation, -0.387
+against a Phase 4 target of <= -0.50.** Alignment *accuracy* is unchanged and
+still excellent (median 1.18 px, 98.5% under 10 px); what degraded is the
+confidence score's ability to RANK which alignments are worse. Phase 4 always
+described that correlation as a ranking signal only, and the refusal logic keys
+off the confidence floor rather than the ranking, so the practical effect is
+limited - but the published -0.516 should not be quoted without this note. It
+reflects sensitivity of a correlation to which 52 images happen to be in the
+test split.
+
+### Data-quality findings recorded
+
+Three now stand in the limitations of `data/processed/SPLIT_DESIGN.md`:
+S-184-01 (unassessable image), N-226-01 (degenerate zero-area polygon), and the
+free-text Clinical Diagnosis column (45 strings for ~12 conditions, with
+repeated misspellings).
+
+Track C modelling is closed. The model stays parked and
+`classification.surface_predictions` stays false.
+
+*OralTwin is a screening aid, not a diagnostic tool.*

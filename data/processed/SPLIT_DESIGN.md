@@ -234,7 +234,15 @@ perceptually matches an excluded original.
    "labelled refer but no lesion annotated" failure mode does not occur in this
    dataset, and Healthy is its exact complement at 729/729 with none. Label noise
    is therefore not the explanation for weak model sensitivity.
-9. **A model has now been trained on these splits** (binary referral, 2026-10-06)
+9. **The Clinical Diagnosis column is free text and inconsistent.** 45 distinct
+   strings describe roughly 12 conditions, with repeated misspellings -
+   `Leukplakia`, `Leukopakia`, `Leukolpka`, `Leukoplia`, `Erythroplkia`,
+   `Verucouss Ca`, `Verrucopappilary Lesion`, `Depaillation With Leukoplakia`,
+   `OLP/LR` vs `OLP/ LR` vs `OLP /LR`. Any subtype analysis must normalise by
+   token rather than by exact string, as `scripts/opmd_subtype_analysis.py`
+   does. Alongside S-184-01 (unassessable) and N-226-01 (degenerate polygon),
+   this is the third data-quality finding in this dataset.
+10. **A model has now been trained on these splits** (binary referral, 2026-10-06)
    and failed its acceptance gate. See `models/logs/experiments.md`.
 
 *OralTwin is a screening aid, not a diagnostic tool.*

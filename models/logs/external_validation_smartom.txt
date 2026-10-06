@@ -1,0 +1,45 @@
+==========================================================================
+EXTERNAL VALIDATION - SMART-OM (never trained on)
+==========================================================================
+
+guard check: scoring '04. Oral Cancer' was refused, as intended.
+scope: ['01. Normal', '03. OPMD'] only; Variation from normal and Oral Cancer excluded.
+
+images: 2270
+model: classifier_binary_referral.h5
+  500/2270 ...
+  1000/2270 ...
+  1500/2270 ...
+  2000/2270 ...
+
+*** EXTERNAL VALIDATION OF A MODEL THAT FAILED ITS ACCEPTANCE GATE; REPORTED FOR COMPLETENESS, NOT AS A PERFORMANCE CLAIM ***
+
+results on SMART-OM (OPMD vs Normal):
+  accuracy     0.915 [0.902, 0.925] (2076/2270)
+  sensitivity  0.072 [0.038, 0.131] (9/125)   (OPMD referred)
+  specificity  0.964 [0.955, 0.971] (2067/2145)   (Normal spared)
+  PPV          0.103 [0.055, 0.185] (9/87)
+  confusion: TP 9  FP 78  FN 116  TN 2067
+
+  by category:
+    01. Normal                   0.964 [0.955, 0.971] (2067/2145)
+    03. OPMD                     0.072 [0.038, 0.131] (9/125)
+
+internal (Piyarathne test) figures are in eval_report_binary_referral.txt;
+the drop from internal to external is the number that matters here.
+
+INTERNAL vs EXTERNAL sensitivity
+  internal (Piyarathne test, patient-disjoint): 0.491
+  external (SMART-OM, never trained on):        0.072 [0.038, 0.131]
+  change: -0.419 (-41.9 points)
+  => external sensitivity falls below the internal figure and its interval excludes it: even the weak signal does not fully transfer to photographs from another clinic.
+
+Note: the base rate differs sharply from the internal split - SMART-OM is
+overwhelmingly Normal (2145 of 2270), so accuracy here is dominated by
+specificity. Read sensitivity and specificity separately, never accuracy alone.
+
+summary: sensitivity 0.072, specificity 0.964
+
+
+*** EXTERNAL VALIDATION OF A MODEL THAT FAILED ITS ACCEPTANCE GATE; REPORTED FOR COMPLETENESS, NOT AS A PERFORMANCE CLAIM ***
+OralTwin is a screening aid, not a diagnostic tool.

@@ -41,6 +41,13 @@ from src.utils.stats import format_rate, wilson_interval  # noqa: E402
 
 USABLE = {"01. Normal": "no_refer", "03. OPMD": "refer"}
 
+# Mandatory on every figure this script produces. The model failed its Phase 2
+# acceptance gate (Grad-CAM 6/10, sensitivity 0.491); these numbers complete the
+# experimental record and are not a claim about how well anything works.
+LABEL = ("external validation of a model that failed its acceptance gate; "
+         "reported for completeness, not as a performance claim")
+INTERNAL_SENSITIVITY = 0.491  # Piyarathne test split, same model
+
 
 def main():
     cfg = load_config()
@@ -117,6 +124,8 @@ def main():
     false_positive = int(((truth == negative) & (predicted == positive)).sum())
 
     log("")
+    log(f"*** {LABEL.upper()} ***")
+    log("")
     log("results on SMART-OM (OPMD vs Normal):")
     log(f"  accuracy     {format_rate(true_positive + true_negative, len(truth))}")
     log(f"  sensitivity  {format_rate(true_positive, true_positive + false_negative)}"
@@ -141,8 +150,29 @@ def main():
     if internal.exists():
         log(f"internal (Piyarathne test) figures are in {internal.name};")
         log("the drop from internal to external is the number that matters here.")
-    sensitivity = wilson_interval(true_positive, true_positive + false_negative)[0]
+    sensitivity, sens_low, sens_high = wilson_interval(
+        true_positive, true_positive + false_negative)
     specificity = wilson_interval(true_negative, true_negative + false_positive)[0]
+
+    log("")
+    log("INTERNAL vs EXTERNAL sensitivity")
+    log(f"  internal (Piyarathne test, patient-disjoint): {INTERNAL_SENSITIVITY:.3f}")
+    log(f"  external (SMART-OM, never trained on):        {sensitivity:.3f} "
+        f"[{sens_low:.3f}, {sens_high:.3f}]")
+    change = sensitivity - INTERNAL_SENSITIVITY
+    log(f"  change: {change:+.3f} ({change * 100:+.1f} points)")
+    if sens_low <= INTERNAL_SENSITIVITY <= sens_high:
+        verdict = ("the external interval contains the internal figure: the weakness "
+                   "is STABLE across datasets. The model is consistently weak rather "
+                   "than weak only here - it transfers its mediocrity intact.")
+    elif sensitivity < INTERNAL_SENSITIVITY:
+        verdict = ("external sensitivity falls below the internal figure and its "
+                   "interval excludes it: even the weak signal does not fully "
+                   "transfer to photographs from another clinic.")
+    else:
+        verdict = ("external sensitivity exceeds the internal figure. Read this with "
+                   "care - the two sets differ in case mix as well as in source.")
+    log(f"  => {verdict}")
     log("")
     log("Note: the base rate differs sharply from the internal split - SMART-OM is")
     log(f"overwhelmingly Normal ({int((truth == negative).sum())} of {len(truth)}), so "
@@ -151,6 +181,8 @@ def main():
     log("")
     log(f"summary: sensitivity {sensitivity:.3f}, specificity {specificity:.3f}")
     log("")
+    log("")
+    log(f"*** {LABEL.upper()} ***")
     log("OralTwin is a screening aid, not a diagnostic tool.")
 
     out.parent.mkdir(parents=True, exist_ok=True)
