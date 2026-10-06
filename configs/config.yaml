@@ -64,6 +64,18 @@ opmd:
   img_size: 224
   classes: [suspicious, normal]
 
+audit:
+  # Phase 1 completion audit of the newly arrived datasets. Read-only on data/raw.
+  # Measured sweep on MIO: at 10 the clusters chain (largest 364 images spanning
+  # three unrelated categories); at 6 and below the largest is 8, which matches
+  # one patient photographed at eight intraoral sites. 6 is the honest value.
+  phash_cluster_threshold: 6       # tight cluster = repeat photographs of one mouth
+  cross_dataset_phash_threshold: 8 # same photo appearing in two datasets
+  annotation_samples: 5            # mask overlays rendered for review
+  probe_images_per_source: 400     # balanced sample for the provenance probe
+  probe_test_fraction: 0.25
+  probe_image_size: 64             # the probe sees only coarse appearance
+
 deploy:
   tflite_variants: [float32, float16, int8]
   latency_runs: 50
