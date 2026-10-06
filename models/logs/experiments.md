@@ -346,3 +346,62 @@ Track C modelling is closed. The model stays parked and
 `classification.surface_predictions` stays false.
 
 *OralTwin is a screening aid, not a diagnostic tool.*
+
+---
+
+## Phase 3 - U-Net segmentation (2026-10-06): GATE FAILED
+
+**Setup.** Two-channel U-Net (oral cavity, lesion), 1,947,010 parameters,
+256px, base 16 filters, depth 4. Loss 0.5*BCE + 0.5*Dice. Local CPU training
+only - Piyarathne never leaves the machine. Existing patient-disjoint splits,
+unchanged: 2,099 train / 451 val / 449 test cached pairs.
+
+**Timing.** Measured before committing, as required: 6.87 min/epoch steady
+state, extrapolating to 5h45m worst case. Actual run stopped early at epoch 27
+(best epoch 21), 2h27m.
+
+**Results on the held-out test split.**
+
+| channel | Dice [95% CI] | IoU [95% CI] | n |
+|---|---|---|---|
+| oral cavity | 0.933 [0.926, 0.940] | 0.883 [0.872, 0.893] | 449 |
+| lesion | 0.362 [0.332, 0.392] | 0.278 [0.253, 0.304] | 446 |
+
+CIs are bootstrap percentile intervals over images; Dice is a continuous
+per-image quantity, not a success count, so Wilson does not apply here.
+
+Lesion Dice is computed over lesion-bearing images only. Averaging in the
+Healthy images, where the truth is empty and Dice undefined, would let a
+correct all-zero prediction score 1.0 by convention and drag the mean past
+the gate without the model ever locating a lesion.
+
+**Gate: FAILED on both halves.**
+
+- numeric: lesion Dice 0.362 vs 0.70 required
+- visual: 5 of 10 overlays land on annotated tissue, vs 8 of 10 required
+
+**Diagnosis - the lesion head learned to outline the mouth.**
+
+- Dice(predicted lesion, ground-truth **cavity**) = 0.494. The predicted
+  lesion mask resembles the cavity more than it resembles the lesion (0.362).
+- r(lesion Dice, lesion/cavity area ratio) = 0.777 over 340 images.
+- Stratified: lesions covering <10% of the cavity score 0.201 (n=144); those
+  covering >75% score 0.778 (n=14).
+- On 109 Healthy test images with no annotated lesion, the model paints a mean
+  15.5% of the frame as lesion; only 2.8% predict essentially nothing.
+
+Train lesion Dice 0.364 vs val 0.347 - no generalisation gap. This is not
+overfitting; the model learned the wrong target consistently on both splits,
+so more epochs or regularisation do not address it.
+
+This is the third shortcut-learning finding in the project, after the Phase 2
+Grad-CAM failure and the Ca N acquisition confound. Same signature each time:
+a respectable aggregate number resting on an easier correlated target.
+
+**Status: stopped, per the Phase 3 brief. No tuning.** The cavity channel is
+the only reusable artefact.
+
+Evidence: `models/logs/segmentation_eval.txt`,
+`models/logs/segmentation_per_image.csv`,
+`models/logs/segmenter_history.csv`,
+overlays in `data/processed/segmentation_overlays/` (git-ignored, CC BY-NC-ND).

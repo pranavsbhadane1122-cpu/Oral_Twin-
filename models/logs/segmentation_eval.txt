@@ -1,0 +1,133 @@
+==========================================================================
+PHASE 3 - SEGMENTATION EVALUATION (held-out test split)
+==========================================================================
+
+model: segmenter.h5   threshold 0.5
+test images: 449
+
+--------------------------------------------------------------------------
+DICE and IoU, mean with bootstrap 95% CI over images
+--------------------------------------------------------------------------
+  cavity  n=449  (all images with an annotated cavity)
+      Dice 0.933  [0.926, 0.940]
+      IoU  0.883  [0.872, 0.893]
+  lesion  n=446  (lesion-bearing images only)
+      Dice 0.362  [0.332, 0.392]
+      IoU  0.278  [0.253, 0.304]
+
+  images with NO annotated lesion (Healthy): 109
+      mean predicted lesion area: 15.50% of frame
+      predicted essentially nothing (<0.1% of frame): 3/109 (2.8%)
+      Dice is undefined here and is excluded from the figures above.
+
+--------------------------------------------------------------------------
+OVERLAYS - 10 lesion-bearing test images, chosen at random (seed 20251006)
+  green = annotated ground truth    red = model prediction
+--------------------------------------------------------------------------
+  N-031-01       OPMD       lesion Dice 0.820   N-031-01_lesion.jpg
+  N-110-01       OPMD       lesion Dice 0.206   N-110-01_lesion.jpg
+  N-147-01       Benign     lesion Dice 0.046   N-147-01_lesion.jpg
+  N-159-01       Benign     lesion Dice 0.150   N-159-01_lesion.jpg
+  N-214-01       OCA        lesion Dice 0.131   N-214-01_lesion.jpg
+  R-189-02       OPMD       lesion Dice 0.776   R-189-02_lesion.jpg
+  S-167-03       OPMD       lesion Dice 0.953   S-167-03_lesion.jpg
+  S-19-03        OPMD       lesion Dice 0.347   S-19-03_lesion.jpg
+  S-44-01        OCA        lesion Dice 0.725   S-44-01_lesion.jpg
+  S-47-01        Benign     lesion Dice 0.844   S-47-01_lesion.jpg
+
+overlays written to C:\Users\Utente\Desktop\Ashu Project\oraltwin\data\processed\segmentation_overlays
+(git-ignored: these are derivatives of a CC BY-NC-ND dataset)
+
+==========================================================================
+GATE
+==========================================================================
+  required: lesion Dice >= 0.70 on lesion-bearing test images
+  measured: 0.362   -> FAIL
+  required: >= 8 of 10 predicted masks land on annotated tissue
+  measured: see the written verdict below - judged by looking at the
+            overlays, not inferred from the Dice figure.
+
+OralTwin is a screening aid, not a diagnostic tool.
+==========================================================================
+VISUAL VERDICT - written after looking at all 10 overlays
+==========================================================================
+
+Tally: 5 of 10 predicted lesion masks land on the annotated lesion.
+       The gate requires 8 of 10. VISUAL GATE: FAIL.
+
+Lands on the annotated tissue (5):
+  S-167-03  0.953  tight contour around the lower-lip lesion
+  S-47-01   0.844  tight, follows the lip border
+  N-031-01  0.820  on target but ragged, with interior holes and one stray
+                   blob at the left frame edge
+  R-189-02  0.776  on target, ragged interior
+  S-44-01   0.725  contains the tumour but spills well down the tongue onto
+                   tissue that carries no annotation
+
+Does not (5):
+  S-19-03   0.347  a large mask drawn over the UPPER AND LOWER TOOTH ROWS;
+                   the annotated buccal lesion is mostly missed. This is the
+                   drift-onto-teeth failure in its plainest form.
+  N-110-01  0.206  predicts most of the oral cavity. It encloses the small
+                   annotated lesion, but only the way a map of a city
+                   "contains" a street.
+  N-159-01  0.150  blobs on the lower lip and tongue, away from the annotated
+                   gum lesion
+  N-214-01  0.131  an annulus around the cavity; the predicted mask largely
+                   AVOIDS the annotated lesion sitting inside it
+  N-147-01  0.046  the whole visible oral region painted; the two small gum
+                   lesions are barely touched
+
+WHAT THE MODEL ACTUALLY LEARNED
+-------------------------------
+The failures are not random - they are cavity-shaped. Three measurements
+confirm what the overlays suggest, so this is not an impression:
+
+  1. Dice(predicted LESION mask, ground-truth CAVITY mask) = 0.494.
+     The predicted lesion mask resembles the oral cavity MORE than it
+     resembles the lesion it is supposed to find (0.362).
+
+  2. Pearson r(per-image lesion Dice, lesion area / cavity area) = 0.777
+     over 340 test images. Lesion Dice is largely a function of how much of
+     the mouth the lesion happens to fill.
+
+  3. Lesion Dice stratified by that ratio:
+        lesion covers   0- 10% of cavity   n=144   Dice 0.201
+        lesion covers  10- 25% of cavity   n= 53   Dice 0.520
+        lesion covers  25- 50% of cavity   n= 62   Dice 0.690
+        lesion covers  50- 75% of cavity   n= 67   Dice 0.766
+        lesion covers  75-101% of cavity   n= 14   Dice 0.778
+
+  4. On the 109 Healthy test images, where no lesion is annotated at all, the
+     model still paints a mean 15.5% of the frame as lesion, and only 3 of
+     109 (2.8%) predict essentially nothing.
+
+The lesion head has learned "outline the mouth", not "find the lesion". It
+scores well precisely on the images where outlining the mouth is close to the
+right answer - the whole-lip and whole-tongue annotations - and collapses on
+the small focal lesions, which are the clinically interesting ones and the
+majority of the set (144 of 340 cover under 10% of the cavity).
+
+This is the same species of defect as the Phase 2 Grad-CAM failure: a
+plausible aggregate number resting on the model having found an easier
+correlated target than the one asked for. The headline 0.362 is not simply
+"a weak segmenter"; it is a cavity segmenter being scored on a lesion task.
+
+Train lesion Dice (0.364) and validation lesion Dice (0.347) are essentially
+equal, so this is not overfitting. The model is not failing to generalise
+what it learned - it learned the wrong thing, consistently, on both splits.
+More epochs, more regularisation or more augmentation do not address that.
+
+GATE OUTCOME
+------------
+  numeric: lesion Dice 0.362 vs 0.70 required   FAIL
+  visual:  5 of 10 vs 8 of 10 required          FAIL
+
+Both halves fail. Per the Phase 3 brief, work stops here. No tuning, no
+threshold adjustment, no re-run with different hyperparameters.
+
+The cavity channel, for the record, is genuinely good: Dice 0.933
+[0.926, 0.940], IoU 0.883 [0.872, 0.893]. If anything here is reusable it is
+the cavity segmenter, not the lesion one.
+
+OralTwin is a screening aid, not a diagnostic tool.
