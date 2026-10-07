@@ -150,6 +150,12 @@ demo:
   sample_pairs:
     good: pair_0058
     out_of_frame: pair_0014
+    unusable: pair_0001          # genuinely out of focus
+    induced_low_confidence: pair_0012   # aligns fine; the threshold is raised at it
+  # Raised above pair_0012's real alignment score (0.62) to exercise the refusal
+  # path. No pair in data/longitudinal fails alignment naturally - 200/200
+  # succeed - so this path has no natural example and the UI says so on screen.
+  induced_confidence_floor: 0.70
   # two photographs of DIFFERENT mouths: alignment should not find a real match
   low_confidence_classes: [gingivitis, caries]
   # a photograph that is not a mouth at all, as a negative control

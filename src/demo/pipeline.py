@@ -28,15 +28,43 @@ from src.utils.config import PROJECT_ROOT, load_config
 from src.utils.prep_common import imread_unicode
 
 NOT_INCLUDED = [
-    "Naming a condition - the classifier that would do it is parked, because it "
-    "learned to tell images apart by where they came from rather than by "
-    "pathology. This demo names no condition at all.",
-    "Lesion segmentation - no trained segmenter yet; regions shown for uploads come "
-    "from a labelled placeholder, and sample pairs use simulated masks.",
-    "Oral-cancer / OPMD detection - blocked pending access to an external dataset.",
-    "Validation on real repeat photographs - change detection was validated on "
-    "simulated visit pairs with known ground truth.",
+    "Naming a condition. The classifier that would do this is parked. On its own "
+    "held-out photographs it correctly flagged only about 49 of every 100 cases it "
+    "should have flagged; on photographs from a different clinic that fell to about "
+    "7 in every 100. It had also learned to tell images apart by where they came "
+    "from rather than by what was in them. This demo names no condition at all.",
+
+    "Outlining an area of concern. The lesion segmentation model failed its "
+    "acceptance test. Rather than finding the area of concern, it learned to draw "
+    "around the inside of the mouth: its outlines matched the mouth more closely "
+    "than they matched the area they were supposed to find, and on photographs of "
+    "healthy mouths it still painted an outline over roughly a sixth of the "
+    "picture. Nothing shown here is an area found by a model.",
+
+    "Measuring how much of the picture is mouth. The oral-cavity outline is "
+    "accurate on the data it was trained on, but measurably worse on photographs "
+    "from elsewhere, so it is never trusted on its own. It is used only as one half "
+    "of an agreement check against a second, independent estimate. When the two "
+    "disagree, the figure is withheld and the app says so instead of picking one.",
+
+    "Change detection on real repeat photographs. The change figures here are "
+    "measured on simulated areas with known answers, not on areas produced by any "
+    "model, and on simulated visit pairs rather than two real visits by one person.",
+
+    "OPMD detection - blocked pending access to an external dataset.",
 ]
+
+SIMULATED = ("Simulated visit pair: one real photograph, warped by a known "
+             "transform, with a simulated area of interest. Not two real visits.")
+CONSTRUCTED = ("Constructed input: these two photographs were deliberately paired to "
+               "show what the app does when a comparison cannot be trusted.")
+INDUCED_NOTE = (
+    "INDUCED, not natural. These two photographs line up perfectly well. The "
+    "reliability threshold was raised to {floor} - above this pair's real alignment "
+    "score - purely to show the refusal. No pair in the sample set fails alignment "
+    "on its own: 200 of 200 succeed, so this path has no natural example and is "
+    "shown here by changing a setting rather than by finding a genuine failure."
+)
 
 SCREENING_LINE = ("OralTwin is a screening aid, not a diagnostic tool. "
                   "It cannot diagnose anything. Have any finding checked by a dentist.")
@@ -79,24 +107,52 @@ def demo_cases(cfg=None):
             "pair_name": d["sample_pairs"]["good"],
             "paths": sample_pair_paths(d["sample_pairs"]["good"], cfg),
             "note": "Two simulated visits of the same mouth, well aligned.",
+            "provenance": SIMULATED,
+            "induced": None,
         },
         "out_of_frame": {
             "title": "Sample pair - region partly out of frame",
             "pair_name": d["sample_pairs"]["out_of_frame"],
             "paths": sample_pair_paths(d["sample_pairs"]["out_of_frame"], cfg),
             "note": "The area of interest is not fully inside the newer photograph.",
+            "provenance": SIMULATED,
+            "induced": None,
+        },
+        "unusable": {
+            "title": "Sample pair - the photograph is not good enough",
+            "pair_name": d["sample_pairs"]["unusable"],
+            "paths": sample_pair_paths(d["sample_pairs"]["unusable"], cfg),
+            "note": "This photograph is genuinely out of focus. Nothing was changed "
+                    "to make it so.",
+            "provenance": SIMULATED,
+            "induced": None,
         },
         "low_confidence": {
             "title": "Two different mouths",
             "pair_name": None,
             "paths": (first_test_image(cls_a, cfg), first_test_image(cls_b, cfg)),
             "note": "Photographs of different mouths: there is no real alignment to find.",
+            "provenance": CONSTRUCTED,
+            "induced": None,
+        },
+        "induced_low_confidence": {
+            "title": "Reliability threshold raised (induced)",
+            "pair_name": d["sample_pairs"]["induced_low_confidence"],
+            "paths": sample_pair_paths(d["sample_pairs"]["induced_low_confidence"], cfg),
+            "note": "What the app does when a comparison is judged too unreliable "
+                    "to report.",
+            "provenance": CONSTRUCTED,
+            "induced": INDUCED_NOTE.format(floor=d["induced_confidence_floor"]),
+            "cfg_overrides": {"delta": {"confidence_floor":
+                                        d["induced_confidence_floor"]}},
         },
         "unrelated": {
             "title": "One photograph is not a mouth",
             "pair_name": None,
             "paths": (first_test_image(cls_a, cfg), PROJECT_ROOT / d["unrelated_asset"]),
             "note": "Negative control: the second photograph is not an oral photograph.",
+            "provenance": CONSTRUCTED,
+            "induced": None,
         },
     }
 
@@ -219,4 +275,23 @@ def run_demo(visit1, visit2, pair_name=None, cfg=None):
         result["pair_name"], change_report, risk, None, None, {},
         {"reason": alignment["reason"]}, cfg=cfg,
     )
+
+    # The caption layer: describes the photographs, never their condition.
+    # Both visits are described, because "is this one usable" is a per-photo
+    # question and the user took two.
+    from src.caption import compare as caption_compare
+    from src.caption import describe as caption_describe
+    from src.caption.render import LIMITATIONS
+
+    result["caption"] = {
+        "visit1": caption_describe.describe(img1, cfg),
+        "visit2": caption_describe.describe(img2, cfg),
+        "comparison": caption_compare.summarise(change_report, cfg),
+        "limitations": LIMITATIONS,
+    }
+    result["caption"]["lines"] = {
+        "visit1": caption_describe.sentences(result["caption"]["visit1"]),
+        "visit2": caption_describe.sentences(result["caption"]["visit2"]),
+        "comparison": caption_compare.sentences(result["caption"]["comparison"]),
+    }
     return result

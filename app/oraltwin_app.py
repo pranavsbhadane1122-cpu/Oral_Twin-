@@ -8,6 +8,7 @@ Disease classification is parked and segmentation/OPMD are blocked on data, and
 the app says so on screen rather than hiding it.
 """
 
+import copy
 import sys
 from pathlib import Path
 
@@ -55,6 +56,46 @@ def render_not_included():
                "substitute for a dental examination.")
     for item in NOT_INCLUDED:
         st.markdown("- " + item)
+
+
+def render_caption(result):
+    """The plain-language description. Describes the photographs, not the mouth."""
+    caption = result.get("caption")
+    if not caption:
+        return
+    st.subheader("0 - In plain language")
+    st.caption("This section describes your photographs: whether they are usable "
+               "and what changed. It does not say what is in them.")
+
+    left, right = st.columns(2)
+    for column, key, label in ((left, "visit1", "Previous visit"),
+                               (right, "visit2", "This visit")):
+        with column:
+            st.markdown(f"**{label}**")
+            for line in caption["lines"][key]:
+                st.markdown("- " + line)
+            if not caption[key]["usable"]:
+                st.warning("This photograph may not be good enough to rely on.")
+
+    st.markdown("**Compared with the previous visit**")
+    comparison = caption["comparison"]
+    lines = caption["lines"]["comparison"]
+    if comparison["state"] != "reliable":
+        # a refusal must not be able to read like a result
+        st.error("\n\n".join(lines))
+    else:
+        for line in lines:
+            st.markdown("- " + line)
+
+    st.info(caption["limitations"])
+
+
+def render_provenance(case):
+    """Say on screen, not only in a filename, when a case is induced."""
+    if case.get("induced"):
+        st.error("**Induced case.** " + case["induced"])
+    if case.get("provenance"):
+        st.caption(case["provenance"])
 
 
 def render_alignment(result):
@@ -132,6 +173,8 @@ def render_risk(result):
 
 
 def render_result(result):
+    render_caption(result)
+    st.divider()
     st.subheader("1 - The two photographs")
     cols = st.columns(2)
     cols[0].image(rgb(result["images"]["visit1"]), caption="Previous visit",
@@ -205,13 +248,19 @@ def main():
             st.error("One of those files could not be read as an image.")
             return
         with st.spinner("Aligning and comparing..."):
-            result = run_demo(images[0], images[1])
+            result = run_demo(images[0], images[1], cfg=cfg)
     else:
         case = cases[case_key]
         st.caption("Sample: **" + case["title"] + "** - " + case["note"])
+        render_provenance(case)
+        case_cfg = cfg
+        if case.get("cfg_overrides"):
+            case_cfg = copy.deepcopy(cfg)
+            for section, values in case["cfg_overrides"].items():
+                case_cfg[section].update(values)
         with st.spinner("Aligning and comparing..."):
             result = run_demo(case["paths"][0], case["paths"][1],
-                              pair_name=case["pair_name"])
+                              pair_name=case["pair_name"], cfg=case_cfg)
 
     render_result(result)
     st.divider()

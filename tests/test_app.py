@@ -55,6 +55,12 @@ def ui_strings(result):
     out += [str(report.get("reason") or ""), report.get("summary", {}).get("headline", "")]
     for lesion in report.get("lesions", []):
         out.append(lesion["message"])
+    # the caption layer also reaches the screen, so it is checked here too -
+    # a guard that skips the newest text on screen is a guard in name only
+    caption = result.get("caption") or {}
+    for key in ("visit1", "visit2", "comparison"):
+        out += list((caption.get("lines") or {}).get(key, []))
+    out.append(caption.get("limitations", ""))
     return [s for s in out if s]
 
 
@@ -190,6 +196,47 @@ class TestUploadPath(unittest.TestCase):
         self.assertEqual(self.result["pair_name"], "uploaded photos")
 
 
+class TestInducedRefusal(unittest.TestCase):
+    """The induced case must actually refuse, not merely carry a banner."""
+
+    @classmethod
+    def setUpClass(cls):
+        import copy
+
+        case = demo_cases(CFG)["induced_low_confidence"]
+        cfg = copy.deepcopy(CFG)
+        for section, values in case["cfg_overrides"].items():
+            cfg[section].update(values)
+        cls.case = case
+        cls.result = run_demo(case["paths"][0], case["paths"][1],
+                              pair_name=case["pair_name"], cfg=cfg)
+        cls.plain = run_demo(case["paths"][0], case["paths"][1],
+                             pair_name=case["pair_name"], cfg=CFG)
+
+    def test_it_refuses_under_the_override(self):
+        self.assertEqual(self.result["status"], "refused")
+        # either refusal state is correct; what matters is that it is not
+        # "reliable", because that is what decides how the UI renders it
+        self.assertIn(self.result["caption"]["comparison"]["state"],
+                      ("unreliable", "failed"))
+
+    def test_the_same_pair_does_not_refuse_without_the_override(self):
+        """Proves the refusal comes from the setting, which is why it is induced."""
+        self.assertEqual(self.plain["status"], "ok")
+
+    def test_the_refusal_reports_no_change_figures(self):
+        text = "\n".join(self.result["caption"]["lines"]["comparison"])
+        self.assertNotIn("%", text)
+        self.assertNotIn("larger", text)
+        self.assertNotIn("smaller", text)
+
+    def test_the_banner_states_it_is_induced_and_why(self):
+        banner = self.case["induced"].lower()
+        self.assertIn("induced", banner)
+        self.assertIn("not natural", banner)
+        self.assertIn("200 of 200", banner)
+
+
 class TestStaticUiText(unittest.TestCase):
     def test_switch_is_off(self):
         self.assertFalse(CFG["classification"]["surface_predictions"])
@@ -199,9 +246,43 @@ class TestStaticUiText(unittest.TestCase):
         for gap in ("classifier", "segmentation", "opmd"):
             self.assertIn(gap, text)
 
+    def test_not_included_states_the_measured_failures(self):
+        """The panel must carry the numbers, not a vague admission of weakness."""
+        text = " ".join(NOT_INCLUDED).lower()
+        self.assertIn("49 of every 100", text)          # internal sensitivity 0.491
+        self.assertIn("7 in every 100", text)           # external sensitivity 0.072
+        self.assertIn("draw around the inside of the mouth", text)
+        self.assertIn("agreement check", text)
+        self.assertIn("simulated", text)
+
+    def test_not_included_is_plain_language(self):
+        """No jargon a visitor would have to look up."""
+        text = " ".join(NOT_INCLUDED).lower()
+        for jargon in ("dice", "sensitivity", "specificity", "grad-cam", "homography",
+                       "u-net", "confound", "auc", "f1", "recall"):
+            self.assertNotIn(jargon, text, f"jargon {jargon!r} in the panel")
+
     def test_screening_line_present(self):
         self.assertIn("screening aid", SCREENING_LINE.lower())
         self.assertIn("dentist", SCREENING_LINE.lower())
+
+    def test_induced_cases_declare_themselves(self):
+        """A case that only refuses because a setting was changed must say so."""
+        cases = demo_cases(CFG)
+        induced = {k: c for k, c in cases.items() if c.get("induced")}
+        self.assertTrue(induced, "no induced case is offered")
+        for key, case in induced.items():
+            self.assertIn("induced", case["induced"].lower(), key)
+            self.assertIn("cfg_overrides", case, key)
+        for key, case in cases.items():
+            # a case that changes config MUST carry the banner
+            if case.get("cfg_overrides"):
+                self.assertTrue(case.get("induced"),
+                                f"{key} changes config but is not labelled induced")
+
+    def test_every_case_declares_its_provenance(self):
+        for key, case in demo_cases(CFG).items():
+            self.assertTrue(case.get("provenance"), f"{key} has no provenance line")
 
     def test_app_source_mentions_no_condition_names(self):
         from src.utils.config import PROJECT_ROOT
