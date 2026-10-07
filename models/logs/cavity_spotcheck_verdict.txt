@@ -1,0 +1,69 @@
+==========================================================================
+SPOT-CHECK: is the cavity model usable for "how much of the frame is mouth"
+on MIO images? Judged by looking at 10 renders, not inferred from Dice.
+==========================================================================
+
+Per-image estimates (visit1 of 10 randomly chosen pairs, seed 20251007):
+
+  pair        class        model   heuristic   usable?
+  pair_0004   calculus     37.1%      59.2%    NO
+  pair_0010   calculus     39.9%      59.2%    NO
+  pair_0026   caries       89.2%      96.2%    yes
+  pair_0066   caries       74.3%      89.3%    yes
+  pair_0070   caries       99.7%     100.0%    yes
+  pair_0088   gingivitis   95.4%     100.0%    yes
+  pair_0119   caries       74.3%     100.0%    yes (understates)
+  pair_0129   caries       75.8%     100.0%    yes
+  pair_0133   caries       34.1%      97.2%    yes
+  pair_0148   gingivitis   22.0%      69.5%    NO
+
+VERDICT: 7 of 10 sensible, 3 of 10 badly wrong - and NOT usable as a number.
+
+What the model does well. On views that resemble its training data - a face
+with a visible mouth aperture (pair_0133) - it traces the opening accurately,
+and 34% is the correct answer there. On full-frame intraoral photographs
+(pair_0026, 0070, 0088) it correctly reports that nearly the whole frame is
+mouth. On pair_0129 it correctly EXCLUDES a journal figure caption bar burned
+into the bottom of the image. That is better behaviour than expected.
+
+Where it fails, and why it matters. The three failures are one coherent class:
+extreme close-ups of a tooth-and-gum strip (pair_0004, 0010, 0148), where the
+entire frame is already inside the mouth. There the model outlines only the
+soft tissue, excluding the teeth, and reports 22-40% when the true answer is
+essentially 100%.
+
+That is the worst possible direction for this error. A caption reading "the
+mouth occupies 22% of this photograph" invites the user to move CLOSER, when
+they are already too close. The number would not merely be wrong, it would
+give advice that makes the next photograph worse.
+
+The obvious fallback is also unusable. The HSV heuristic returns exactly
+100.0% on 4 of these 10 images. That is not a measurement - it is the
+heuristic's "my mask looked implausible, use the whole frame" path, which is
+indistinguishable in the output from a genuine full-frame intraoral view. A
+figure that silently reports a failure as 100% is worse than one that is
+merely noisy.
+
+DECISION, which departs from the brief and is flagged as such.
+
+The brief said: if the cavity masks are not usable, use the HSV heuristic for
+that figure instead. The measurement says the heuristic is WORSE for this
+specific figure, so substituting it would be following the letter of the
+instruction into a worse outcome.
+
+Instead, the caption layer:
+  - does NOT print a mouth-fraction percentage when the two estimates
+    disagree by more than caption.mouth_fraction_tolerance. It says the
+    extent could not be measured reliably, and says why.
+  - prints the fraction only when both independent sources agree, which is
+    the only condition under which either is evidence.
+  - treats "is an intraoral view present at all" as a separate and much
+    easier question, which both sources answer correctly on all 10 images.
+    That judgement is safe to make; the precise fraction is not.
+
+Both estimates are kept in the structured output for inspection. Only the
+user-facing sentence is withheld.
+
+Renders: data/processed/cavity_spotcheck/ (git-ignored, derivative images)
+
+OralTwin is a screening aid, not a diagnostic tool.
