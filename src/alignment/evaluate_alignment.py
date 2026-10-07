@@ -18,6 +18,7 @@ Usage: python -m src.alignment.evaluate_alignment
 """
 
 import json
+from pathlib import Path
 
 import cv2
 import matplotlib
@@ -65,10 +66,16 @@ def pearson(x, y):
     return float(np.corrcoef(x, y)[0, 1])
 
 
-def main():
-    cfg = load_config()
+def main(cfg=None, out_root=None, write_artifacts=True):
+    """Evaluate alignment and return the metrics dict.
+
+    cfg/out_root are parameters so the region-source A/B can run this exact
+    code twice rather than a second implementation that might drift from it.
+    """
+    cfg = cfg or load_config()
     long_root = PROJECT_ROOT / cfg["paths"]["longitudinal"]
-    out_root = PROJECT_ROOT / cfg["paths"]["processed"] / "alignment"
+    out_root = (Path(out_root) if out_root else
+                PROJECT_ROOT / cfg["paths"]["processed"] / "alignment")
     debug_dir = out_root / "debug"
     out_root.mkdir(parents=True, exist_ok=True)
     debug_dir.mkdir(parents=True, exist_ok=True)
@@ -149,6 +156,17 @@ def main():
 
     lines += [DISCLAIMER, ""]
     report = "\n".join(lines)
+    metrics = {
+        "n_pairs": len(rows), "n_aligned": len(aligned), "pct_aligned": pct_aligned,
+        "median_corner_error": float(np.median(errors)) if len(errors) else None,
+        "p90_corner_error": float(np.percentile(errors, 90)) if len(errors) else None,
+        "mean_corner_error": float(errors.mean()) if len(errors) else None,
+        "pct_under_10px": pct_under10,
+        "corr_aligned": corr, "corr_all": corr_all,
+        "rows": rows, "report": report,
+    }
+    if not write_artifacts:
+        return metrics
     (out_root / "report.txt").write_text(report, encoding="utf-8")
     (out_root / "results.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
@@ -190,6 +208,7 @@ def main():
     print(f"report:  {out_root / 'report.txt'}")
     print(f"scatter: {out_root / 'confidence_vs_error.png'}")
     print(f"debug images: {debug_dir}")
+    return metrics
 
 
 if __name__ == "__main__":

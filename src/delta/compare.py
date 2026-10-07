@@ -93,6 +93,39 @@ def overlap_valid_mask(shape, H, visit2_shape=None):
     return (warped_frame > 127).astype(np.uint8) * 255
 
 
+def valid_region(img1, H, visit2_shape, cfg=None):
+    """(mask, source) for the region where a comparison is fair.
+
+    `delta.valid_region_source` selects the definition. The default,
+    frame_intersection, is the only one that answers "was this photographed
+    twice?" - the cavity mask answers "is this mouth?", which is a different
+    question and cannot by itself tell that a lesion left visit2's frame. The
+    alternatives exist so that claim can be measured rather than argued.
+
+    Falls back to the frame intersection whenever the cavity model cannot
+    supply a usable mask, so a missing checkpoint degrades rather than breaks.
+    """
+    from src.alignment import cavity_region
+
+    cfg = cfg or load_config()
+    source = cfg["delta"].get("valid_region_source", "frame_intersection")
+    frame = overlap_valid_mask(img1.shape, H, visit2_shape)
+    if source == "frame_intersection":
+        return frame, source
+
+    if source not in ("cavity", "cavity_and_frame"):
+        raise ValueError(
+            f"unsupported delta.valid_region_source {source!r} (expected "
+            f"frame_intersection, cavity or cavity_and_frame)")
+
+    cavity, reason = cavity_region.cavity_mask(img1, cfg)
+    if cavity is None:
+        return frame, f"frame_intersection (fell back: {reason})"
+    if source == "cavity":
+        return cavity, source
+    return cv2.bitwise_and(cavity, frame), source
+
+
 def touches_boundary(component_mask, valid_mask, edge_margin_px):
     """True if the component reaches within edge_margin_px of the comparable
     region's edge (so part of it may be missing from the newer photo)."""

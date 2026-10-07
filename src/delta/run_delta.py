@@ -20,7 +20,7 @@ import numpy as np
 
 from src.alignment.align import align_pair
 from src.alignment.homography import warp_visit2
-from src.delta.compare import compare, overlap_valid_mask
+from src.delta.compare import compare, valid_region
 from src.utils.config import PROJECT_ROOT, load_config
 from src.utils.prep_common import imread_unicode
 
@@ -62,9 +62,10 @@ def run_pair(pair_name, cfg=None):
         img2_warped = warp_visit2(img2, H, img1.shape)
         mask2_warped = cv2.warpPerspective(mask2, H, (img1.shape[1], img1.shape[0]),
                                            flags=cv2.INTER_NEAREST)
-        valid = overlap_valid_mask(img1.shape, H, img2.shape)
+        valid, valid_source = valid_region(img1, H, img2.shape, cfg)
         report = compare(mask1, mask2_warped, img1, img2_warped, confidence, cfg,
                          valid_mask=valid)
+        report["valid_region_source"] = valid_source
         extras = {"img2_warped": img2_warped, "mask2_warped": mask2_warped,
                   "valid_mask": valid}
 

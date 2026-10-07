@@ -179,6 +179,15 @@ risk:
   escalate_on_rule_count: 2    # two or more Moderate-level rules -> Elevated
 
 delta:
+  # Which region counts as comparable between the two visits.
+  #   frame_intersection - visit1's frame AND visit2's frame warped through H.
+  #                        Answers "was this photographed twice?"
+  #   cavity             - the predicted oral cavity alone. Answers "is this
+  #                        mouth?", which is a different question: it cannot
+  #                        tell that a lesion left the second photo's frame.
+  #   cavity_and_frame   - the intersection of both.
+  # Measured, not assumed - see models/logs/experiments.md.
+  valid_region_source: frame_intersection
   min_lesion_area_px: 100      # connected components smaller than this are noise
   change_area_thresh: 0.10     # >=10% area change is "notable"
   compactness_change_thresh: 0.15  # relative change in perimeter^2/(4*pi*area)
@@ -212,6 +221,17 @@ alignment:
   clahe_clip: 2.0
   clahe_grid: 8
   mask_min_area_frac: 0.10   # fall back to full image if mouth mask is smaller
+  # Where the ORB region-of-interest mask comes from.
+  #   cavity_model   - the Phase 3 cavity segmenter (Dice 0.933 in-domain)
+  #   hsv_heuristic  - the original colour-band heuristic
+  # The heuristic is always retained as the fallback: if the model is missing or
+  # its prediction is degenerate, that pair uses the heuristic and the path
+  # taken is recorded in alignment.json under info.region_source.
+  region_source: cavity_model
+  cavity_threshold: 0.5
+  cavity_min_area_frac: 0.05   # below this the prediction is called degenerate
+  cavity_dilate_px: 6          # keypoints on the mouth border must survive
+
   # homography plausibility limits (H normalized to h33=1, mapping visit2->visit1)
   min_scale: 0.5             # sqrt(|det| of the 2x2 affine part)
   max_scale: 2.0

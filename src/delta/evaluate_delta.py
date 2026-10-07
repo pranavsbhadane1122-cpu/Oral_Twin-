@@ -22,6 +22,7 @@ Usage: python -m src.delta.evaluate_delta
 """
 
 import json
+from pathlib import Path
 
 import cv2
 import matplotlib
@@ -170,9 +171,15 @@ def collect(cfg):
     return rows, cache
 
 
-def main():
-    cfg = load_config()
-    out_root = PROJECT_ROOT / cfg["paths"]["processed"] / "delta"
+def main(cfg=None, out_root=None, write_artifacts=True):
+    """Evaluate the delta module and return the metrics dict.
+
+    cfg/out_root are parameters so the region-source A/B runs this exact
+    code rather than a parallel implementation that could drift from it.
+    """
+    cfg = cfg or load_config()
+    out_root = (Path(out_root) if out_root else
+                PROJECT_ROOT / cfg["paths"]["processed"] / "delta")
     debug_dir = out_root / "debug"
     out_root.mkdir(parents=True, exist_ok=True)
     debug_dir.mkdir(parents=True, exist_ok=True)
@@ -289,6 +296,19 @@ def main():
         DISCLAIMER, "",
     ]
     report_txt = "\n".join(lines)
+    metrics = {
+        "recall": recall, "false_area": false_area, "false_color": false_color,
+        "false_edge": false_edge, "false_any": false_any, "mae": mae,
+        "n_changed_comparable": len(changed_cmp),
+        "n_unchanged_color": len(unchanged_color),
+        "n_both": len(both),
+        "n_truly_out_of_frame": len(truly_off), "n_caught": len(caught),
+        "n_missed": len(missed), "n_partial_pairs": n_partial_pairs,
+        "n_over_flagged": len(over_flagged),
+        "rows": rows, "report": report_txt,
+    }
+    if not write_artifacts:
+        return metrics
     (out_root / "report.txt").write_text(report_txt, encoding="utf-8")
     (out_root / "results.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
@@ -328,6 +348,7 @@ def main():
     print(report_txt)
     print(f"report:  {out_root / 'report.txt'}")
     print(f"scatter: {out_root / 'measured_vs_injected.png'}")
+    return metrics
     print(f"debug overlays: {debug_dir}")
 
 

@@ -4,8 +4,17 @@ Pipeline: grayscale -> CLAHE (so the two visits' different lighting does not
 dominate) -> ORB keypoints restricted to a mouth-region mask -> BFMatcher with
 Hamming distance + Lowe ratio test.
 
-Mouth-region mask heuristic
----------------------------
+Region source
+-------------
+`alignment.region_source` selects where the ORB mask comes from: the trained
+cavity segmenter (`cavity_model`, the default) or the original colour heuristic
+(`hsv_heuristic`). The heuristic is always kept as the fallback - if the model
+is unavailable or predicts a degenerate near-empty mask, that image silently
+degrades to the heuristic rather than to no keypoints at all, and the path
+actually taken is recorded in the alignment output.
+
+Mouth-region mask heuristic (the fallback)
+-----------------------------------------
 Intra-oral photos are dominated by two colour families: teeth (bright, low
 saturation, i.e. near-white/grey) and gum/lip/tongue tissue (reddish-pink hues,
 which in OpenCV's 0-179 hue scale wrap around 0: roughly H<=20 or H>=160).
@@ -22,7 +31,12 @@ All tunables come from configs/config.yaml (alignment section).
 import cv2
 import numpy as np
 
+from src.alignment import cavity_region
 from src.utils.config import load_config
+
+HSV = "hsv_heuristic"
+CAVITY = "cavity_model"
+FULL_FRAME = "full_frame"
 
 
 def _acfg(cfg=None):
@@ -57,6 +71,34 @@ def mouth_mask(img_bgr, cfg=None):
     return cv2.dilate(mask, k, iterations=2)
 
 
+def region_mask(img_bgr, cfg=None):
+    """(mask, source) for the ORB region of interest.
+
+    source is one of cavity_model | hsv_heuristic | full_frame, and says which
+    path was actually taken rather than which was requested - a fallback that
+    is not recorded is a fallback nobody notices.
+    """
+    cfg = cfg or load_config()
+    requested = cfg["alignment"].get("region_source", CAVITY)
+
+    if requested == CAVITY:
+        mask, reason = cavity_region.cavity_mask(img_bgr, cfg)
+        if mask is not None:
+            return mask, CAVITY
+        # fall through to the heuristic, carrying the reason
+        fallback = mouth_mask(img_bgr, cfg)
+        source = FULL_FRAME if fallback.all() else HSV
+        return fallback, f"{source} (fell back: {reason})"
+
+    if requested != HSV:
+        raise ValueError(
+            f"unsupported alignment.region_source {requested!r} "
+            f"(expected {CAVITY!r} or {HSV!r})")
+
+    mask = mouth_mask(img_bgr, cfg)
+    return mask, FULL_FRAME if mask.all() else HSV
+
+
 def preprocess(img_bgr, cfg=None):
     """Grayscale + CLAHE, for lighting-robust descriptors."""
     acfg = _acfg(cfg)
@@ -87,11 +129,17 @@ def detect_and_match(img1, img2, cfg=None):
     detector = build_detector(cfg)
 
     g1, g2 = preprocess(img1, cfg), preprocess(img2, cfg)
-    m1, m2 = mouth_mask(img1, cfg), mouth_mask(img2, cfg)
+    m1, src1 = region_mask(img1, cfg)
+    m2, src2 = region_mask(img2, cfg)
     kp1, des1 = detector.detectAndCompute(g1, m1)
     kp2, des2 = detector.detectAndCompute(g2, m2)
 
-    info = {"n_kp1": len(kp1), "n_kp2": len(kp2), "n_raw_matches": 0, "n_good_matches": 0}
+    info = {"n_kp1": len(kp1), "n_kp2": len(kp2), "n_raw_matches": 0,
+            "n_good_matches": 0,
+            "region_source_requested": acfg.get("region_source", CAVITY),
+            "region_source_visit1": src1, "region_source_visit2": src2,
+            "region_frac_visit1": round(float(m1.sum() / 255.0 / m1.size), 4),
+            "region_frac_visit2": round(float(m2.sum() / 255.0 / m2.size), 4)}
     empty = np.zeros((0, 2), np.float32)
     if des1 is None or des2 is None or len(kp1) < 2 or len(kp2) < 2:
         return empty, empty, info

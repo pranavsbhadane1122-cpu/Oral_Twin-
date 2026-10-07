@@ -405,3 +405,54 @@ Evidence: `models/logs/segmentation_eval.txt`,
 `models/logs/segmentation_per_image.csv`,
 `models/logs/segmenter_history.csv`,
 overlays in `data/processed/segmentation_overlays/` (git-ignored, CC BY-NC-ND).
+
+---
+
+## Phase 3 follow-up (2026-10-07): the lesion failure is STRUCTURAL, not provenance
+
+The lesion head's failure is recorded above. This note classifies it, because
+the distinction changes what could ever fix it.
+
+**The evidence, restated.**
+
+- Dice(predicted lesion, true **cavity**) = 0.494 > Dice(predicted lesion, true
+  lesion) = 0.362. The output resembles the mouth more than the target.
+- r(per-image lesion Dice, lesion/cavity area ratio) = 0.777 over 340 images.
+- 15.5% mean hallucinated lesion area on the 109 healthy test images, where the
+  correct answer is nothing at all; only 2.8% predicted nothing.
+
+**Why this is a different kind of defect from the three already recorded.**
+
+The project has three provenance confounds on record: the Ca N acquisition
+confound, the illustration/augmentation contamination, and the SMART-OM
+burned-in annotations. All three are properties of *these datasets*. A
+different dataset, or a cleaner one, removes them. They are fixable by
+collecting or filtering data.
+
+This one is not. The easy wrong answer here is intrinsic to the **task
+geometry**: a lesion is a small region nested inside a large one, both are
+being predicted from the same features, and per-pixel losses pay far more for
+the large region than the small one. Any dataset of oral photographs has this
+property. Swapping in cleaner data would not remove the gradient incentive to
+answer "mouth" when asked "lesion" - the incentive is in the loss, not in the
+provenance.
+
+Recorded as a **structural shortcut** to keep it distinct from the provenance
+confounds. Conflating the two would suggest the fix is better data, which it
+is not.
+
+**FUTURE WORK - deliberately not attempted.**
+
+Reweighting the loss toward the lesion channel, to counteract the area
+imbalance, is the obvious next move. It was NOT tried. The gate failed, and
+every other result in this project rests on the discipline of stopping when a
+gate fails rather than tuning until it passes. Trying the fix that is most
+likely to work, immediately after a failure, on the same test split, is how
+that discipline erodes - the second attempt would be reported against a split
+that has now informed a modelling decision.
+
+If this is picked up later it needs a fresh holdout, not this one.
+
+**What was reused instead.** The cavity channel (Dice 0.933 in-domain) was
+wired into the alignment pipeline as the ORB region of interest. See the
+region-source A/B below.
