@@ -178,6 +178,26 @@ risk:
   persistent_conditions: [gingivitis, calculus]
   escalate_on_rule_count: 2    # two or more Moderate-level rules -> Elevated
 
+caption:
+  # The caption layer describes the PHOTOGRAPH, never the mouth's condition.
+  # No disease names, no severity, no lesion counts: there is no validated
+  # model for any of those. tests/test_caption.py enforces this with a regex
+  # over a condition vocabulary.
+  #
+  # Mouth extent is estimated twice - cavity model and HSV heuristic - and the
+  # figure is printed only when they agree. The spot-check in
+  # models/logs/cavity_spotcheck_verdict.txt shows each source failing alone,
+  # in opposite directions, so agreement is the only usable evidence.
+  mouth_fraction_tolerance: 0.20   # |model - heuristic| above this = no figure
+  intraoral_min_frac: 0.25         # below this in BOTH sources = no clear view
+  heuristic_fullframe_frac: 0.995  # at/above this the heuristic has failed open
+  focus:
+    # variance of Laplacian; bands, not a raw number shown to the user
+    poor: 40.0
+    marginal: 120.0
+  edge_margin_px: 12               # mouth region within this of the edge = clipped
+  clipped_frac: 0.08               # share of the region's edge pixels on the border
+
 delta:
   # Which region counts as comparable between the two visits.
   #   frame_intersection - visit1's frame AND visit2's frame warped through H.

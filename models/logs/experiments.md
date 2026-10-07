@@ -526,3 +526,50 @@ The `cavity` and `cavity_and_frame` paths are kept in the code and under test
 rather than deleted, so the result can be rechecked rather than taken on trust.
 
 Evidence: `models/logs/region_source_comparison.txt`.
+
+---
+
+## Caption layer (2026-10-07)
+
+Describes the photograph. Does not describe the mouth's condition.
+
+**Cavity spot-check decided the design.** Full verdict in
+`models/logs/cavity_spotcheck_verdict.txt`. 7 of 10 masks sensible; the three
+failures are extreme close-ups already entirely intraoral, where the model
+outlines soft tissue only and reports 22-40% against a true ~100%. That error
+points the wrong way - it would tell someone already too close to move closer.
+The HSV heuristic is worse for this figure: it returns exactly 100.0% on 4 of
+10, which is its fallback path, not a measurement.
+
+**Policy adopted instead of the brief's fallback:** the mouth fraction is
+printed only when the two independent estimates agree within
+`caption.mouth_fraction_tolerance`, and refused with a reason otherwise. The
+easier question - is an intraoral view present at all - is answered
+confidently, because both sources get it right on all 10.
+
+**In practice the figure is usually withheld:** 4 of 10 example reports print a
+fraction, 6 refuse it. That is the honest rate on MIO-type images and is worth
+knowing before anyone designs a UI around the number.
+
+**No clinical content, enforced.** `tests/test_caption.py` runs a regex over a
+46-term condition vocabulary against every generated sentence on every path.
+The vocabulary is deliberately wider than the datasets' labels: the realistic
+failure is someone adding a helpful phrase later, not someone wiring up a
+classifier. A non-vacuity test confirms the regex fires on "early caries" and
+"possible gingivitis".
+
+**The refusal path has no natural example in this corpus.** Alignment succeeds
+on 200/200 pairs, so no pair is genuinely uncomparable. The path is covered by
+unit tests and demonstrated on real data in
+`data/processed/caption_examples/pair_0012_INDUCED_refusal.txt`, produced by
+raising `delta.confidence_floor` to 0.70 against that pair's genuine 0.62 and
+labelled as induced. It has NOT been exercised by a real alignment failure,
+which is a gap in the evidence, not a clean result.
+
+**A defect found and fixed while reading the output:** excluded regions were
+being described with generic wording because the lookup keyed on the delta
+engine's free-text `reason` rather than its stable `comparability` code. The
+engine had supplied a perfectly good explanation and the caption was discarding
+it. Found by reading a rendered report, not by a test.
+
+Evidence: `data/processed/caption_examples/` (git-ignored).
