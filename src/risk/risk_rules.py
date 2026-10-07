@@ -41,6 +41,10 @@ from src.delta.compare import FULL, PARTIAL
 from src.utils.config import load_config
 
 LOW, MODERATE, ELEVATED = "Low", "Moderate", "Elevated"
+# A comparison that could not be made is NOT a comparison that found nothing.
+# Without this band a refused pair fell through to Low and announced "nothing
+# stood out as changed" - reassurance about a measurement that never happened.
+NOT_ASSESSED = "Not assessed"
 ORDER = {LOW: 0, MODERATE: 1, ELEVATED: 2}
 
 DENTIST_LINE = "Have this checked by a dentist."
@@ -55,6 +59,8 @@ CONTEXT_NOTE = (
 )
 
 BAND_TEXT = {
+    NOT_ASSESSED: "These two photographs could not be compared, so nothing can be "
+                  "said about what changed.",
     LOW: "Nothing in these two photos stood out as changed.",
     MODERATE: "Something changed between these two photos that is worth a professional look.",
     ELEVATED: "A clear change stands out between these two photos.",
@@ -151,6 +157,22 @@ def stratify(change_report, prediction_visit1=None, prediction_visit2=None,
     rcfg = cfg["risk"]
     fired, advisories = evaluate_rules(change_report, prediction_visit1, prediction_visit2,
                                        alignment_confidence, cfg)
+
+    if change_report.get("status") != "ok":
+        # no rules can fire on a report that was refused, and Low would read as
+        # an all-clear. Say plainly that nothing was assessed.
+        lines = [BAND_TEXT[NOT_ASSESSED]]
+        lines += [f"- {a}" for a in advisories]
+        lines.append(RETAKE_LINE)
+        return {
+            "band": NOT_ASSESSED,
+            "text": "\n".join(lines),
+            "rules_fired": fired,
+            "advisories": advisories,
+            "context_note": CONTEXT_NOTE,
+            "escalated": False,
+            "excluded_metrics": ["edge_irregularity (resampling-sensitive, known unreliable)"],
+        }
 
     band = LOW
     for rule in fired:

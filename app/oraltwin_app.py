@@ -30,7 +30,9 @@ from src.demo.pipeline import (  # noqa: E402
 )
 from src.utils.config import load_config  # noqa: E402
 
-BAND_STYLE = {"Low": "#1C6D60", "Moderate": "#7F620E", "Elevated": "#983820"}
+BAND_STYLE = {"Low": "#1C6D60", "Moderate": "#7F620E", "Elevated": "#983820",
+              # grey, deliberately: a refused comparison is not a green light
+              "Not assessed": "#5A5A5A"}
 
 
 def rgb(img):

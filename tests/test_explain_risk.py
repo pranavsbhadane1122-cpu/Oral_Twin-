@@ -30,7 +30,8 @@ from src.explainability.gradcam import (
     resolve_layer_name,
 )
 from src.risk.report import build_report
-from src.risk.risk_rules import ELEVATED, LOW, MODERATE, stratify
+from src.risk.risk_rules import (ELEVATED, LOW, MODERATE, NOT_ASSESSED,
+                                 stratify)
 from src.utils.config import load_config
 
 CFG = load_config()
@@ -272,12 +273,27 @@ class TestRiskRules(unittest.TestCase):
         self.assertEqual(risk["band"], LOW)
         self.assertTrue(any("confidence" in a.lower() for a in risk["advisories"]))
 
-    def test_unreliable_report_produces_advisory_only(self):
+    def test_unreliable_report_is_not_assessed_rather_than_low(self):
+        """A refused comparison must not read as an all-clear.
+
+        This previously asserted LOW, which was wrong: no rule can fire on a
+        refused report, so the band fell through to Low and the UI announced
+        "Nothing in these two photos stood out as changed" about a comparison
+        that never happened. The test was encoding the defect.
+        """
         risk = stratify({"status": "unreliable", "reason": "could not align",
                          "lesions": [], "summary": {"comparable": False}}, cfg=CFG)
-        self.assertEqual(risk["band"], LOW)
+        self.assertEqual(risk["band"], NOT_ASSESSED)
         self.assertEqual(risk["rules_fired"], [])
         self.assertTrue(risk["advisories"])
+        self.assertNotIn("stood out as changed", risk["text"])
+        self.assertIn("could not be compared", risk["text"])
+
+    def test_only_a_real_comparison_can_be_called_low(self):
+        """Low must mean 'measured, and nothing found'."""
+        risk = stratify(change_report(1000, 1000), cfg=CFG)
+        self.assertEqual(risk["band"], LOW)
+        self.assertIn("stood out as changed", risk["text"])
 
     def test_edge_metric_never_influences_rules(self):
         """edge_notable is True in every fixture; it must never appear anywhere."""
