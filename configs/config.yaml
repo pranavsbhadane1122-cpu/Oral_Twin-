@@ -224,10 +224,15 @@ alignment:
   # Where the ORB region-of-interest mask comes from.
   #   cavity_model   - the Phase 3 cavity segmenter (Dice 0.933 in-domain)
   #   hsv_heuristic  - the original colour-band heuristic
-  # The heuristic is always retained as the fallback: if the model is missing or
-  # its prediction is degenerate, that pair uses the heuristic and the path
-  # taken is recorded in alignment.json under info.region_source.
-  region_source: cavity_model
+  # MEASURED, 2026-10-07: the cavity model was tried and is WORSE here. It
+  # covers 70.4% of the frame against the heuristic's 91.2% and leaves ORB a
+  # median 677 keypoints against 840, and median corner error rose 1.18 -> 1.41
+  # px (p90 2.78 -> 4.64). The heuristic stays the default on the evidence.
+  # See models/logs/region_source_comparison.txt. The cavity path is kept and
+  # tested so the result can be rechecked, not deleted because it lost.
+  # When cavity_model IS selected, the heuristic remains its fallback and the
+  # path taken is recorded in alignment.json under info.region_source_visit1/2.
+  region_source: hsv_heuristic
   cavity_threshold: 0.5
   cavity_min_area_frac: 0.05   # below this the prediction is called degenerate
   cavity_dilate_px: 6          # keypoints on the mouth border must survive

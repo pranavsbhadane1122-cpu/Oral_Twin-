@@ -456,3 +456,73 @@ If this is picked up later it needs a fresh holdout, not this one.
 **What was reused instead.** The cavity channel (Dice 0.933 in-domain) was
 wired into the alignment pipeline as the ORB region of interest. See the
 region-source A/B below.
+
+---
+
+## Region source A/B (2026-10-07): cavity model REJECTED, heuristic retained
+
+The Phase 3 cavity channel (Dice 0.933 in-domain) was substituted for the HSV
+colour heuristic as the ORB region of interest, and measured against it. Both
+arms ran the same evaluator functions with only the config key changed.
+
+**Domain note that frames the whole result.** The segmenter was trained on
+Piyarathne. The longitudinal pairs are built from the MIO classification test
+split - a different dataset, different cameras, different framing. 0.933 is an
+IN-domain number and was never evidence about these images.
+
+| metric | heuristic | cavity model | |
+|---|---|---|---|
+| pairs aligned | 200 | 199 | worse |
+| median corner error (px) | **1.18** | 1.41 | worse |
+| p90 corner error (px) | **2.78** | 4.64 | worse |
+| mean corner error (px) | **1.75** | 2.43 | worse |
+| under 10px | **98.5%** | 95.5% | worse |
+| r(confidence, error), aligned | **-0.387** | -0.263 | worse |
+| r(confidence, error), all pairs | -0.387 | **-0.522** | better |
+| delta recall | 100.0% | 100.0% | same |
+| colour false-flag rate | 3.2% | **3.1%** | same within noise |
+| area false-change rate | **0.0%** | 1.0% | worse |
+| MAE measured vs injected | **1.51 pp** | 2.29 pp | worse |
+| out-of-frame caught / missed | **17 / 0** | **17 / 0** | same |
+| runtime | **0.4 min** | 3.4 min | 8x slower |
+
+**Verdict: the heuristic is kept.** The swap was not an improvement.
+
+**Why, and it is not a fallback artefact.** All 400 images used the cavity
+model - no fallback fired anywhere, so this is the model performing as itself,
+not a degraded path. The mechanism is simply that the cavity mask is tighter:
+it covers 70.4% of the frame against the heuristic's 91.2%, leaving ORB a
+median 677 keypoints against 840. Homography estimation wants wide, well-spread
+correspondences. A more semantically correct region that yields fewer and more
+clustered keypoints is a worse region for this job. Being right about anatomy
+and being useful for RANSAC are different things.
+
+### Delta valid-region sweep (step 4)
+
+| valid_region_source | caught | missed | partial | over-flagged | MAE | n(MAE) |
+|---|---|---|---|---|---|---|
+| frame_intersection | **17** | **0** | **29** | **12** | 1.51 | 171 |
+| cavity | 11 | 6 | 112 | 101 | 1.96 | 88 |
+| cavity_and_frame | **17** | **0** | 122 | 105 | 1.19 | 78 |
+
+(of 17 pairs that ground truth says are genuinely partly out of frame)
+
+**Verdict: frame_intersection is kept.**
+
+- `cavity` alone **misses 6 of 17** genuinely out-of-frame lesions. This was
+  predictable and is now measured: the cavity mask answers "is this mouth?",
+  which carries no information about whether a region was photographed twice.
+  Out-of-frame detection needs the second question, so the frame intersection
+  cannot be replaced by the cavity - only intersected with it.
+- `cavity_and_frame` catches all 17, and its MAE of 1.19 pp looks like the best
+  in the table. It is not. MAE is computed over pairs that stayed comparable,
+  and that variant labels 122 of 200 pairs partial against the frame
+  intersection's 29, so its MAE is measured on n=78 instead of n=171 - a
+  smaller, easier subset. The apparent gain is a selection effect. The real
+  cost is 105 over-flagged pairs: comparisons thrown away on lesions that were
+  fully visible.
+
+The `cavity` and `cavity_and_frame` paths are kept in the code and under test
+rather than deleted, so the result can be rechecked rather than taken on trust.
+
+Evidence: `models/logs/region_source_comparison.txt`.

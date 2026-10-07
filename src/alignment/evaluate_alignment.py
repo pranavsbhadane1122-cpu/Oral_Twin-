@@ -99,6 +99,11 @@ def main(cfg=None, out_root=None, write_artifacts=True):
             "pair": pair.name, "aligned": result["H"] is not None,
             "confidence": result["confidence"], "corner_error": err,
             "reason": result["reason"], "n_inliers": result["info"]["n_inliers"],
+            "region_source_visit1": result["info"].get("region_source_visit1"),
+            "region_source_visit2": result["info"].get("region_source_visit2"),
+            "region_frac_visit1": result["info"].get("region_frac_visit1"),
+            "region_frac_visit2": result["info"].get("region_frac_visit2"),
+            "n_kp1": result["info"]["n_kp1"], "n_kp2": result["info"]["n_kp2"],
             "has_lesion_change": gt["lesion_change"] is not None,
         })
         if result["reason"]:

@@ -1,0 +1,71 @@
+==============================================================================
+REGION SOURCE A/B - HSV heuristic vs trained cavity model
+==============================================================================
+
+The cavity segmenter was trained on Piyarathne and scored Dice 0.933 there.
+These pairs come from the MIO classification test split: a different
+dataset, different cameras, different framing. This is an OUT-OF-DOMAIN
+application of the model and the numbers below are the only evidence that
+it transfers. Nothing here is assumed from the 0.933.
+
+------------------------------------------------------------------------------
+ARM: alignment.region_source = hsv_heuristic
+------------------------------------------------------------------------------
+  done in 0.4 min
+
+------------------------------------------------------------------------------
+ARM: alignment.region_source = cavity_model
+------------------------------------------------------------------------------
+  done in 3.4 min
+
+==============================================================================
+SIDE BY SIDE
+==============================================================================
+metric                                      heuristic   cavity model   change
+------------------------------------------------------------------------------
+pairs aligned                                     200            199   -1 WORSE
+  as % of 200                                   100.0           99.5   -0.5 WORSE
+median corner error (px)                         1.18           1.41   +0.23 WORSE
+p90 corner error (px)                            2.78           4.64   +1.85 WORSE
+mean corner error (px)                           1.75           2.43   +0.68 WORSE
+under 10px (%)                                   98.5           95.5   -3.0 WORSE
+r(confidence, error) aligned                   -0.387         -0.263   +0.124 WORSE
+r(confidence, error) all                       -0.387         -0.522   -0.136 better
+delta recall (%)                                100.0          100.0   same
+colour false-flag rate (%)                        3.2            3.1   -0.1 better
+area false-change rate (%)                        0.0            1.0   +1.0 WORSE
+MAE measured vs injected (pp)                    1.51           2.29   +0.77 WORSE
+out-of-frame caught                                17             17   same
+out-of-frame missed                                 0              0   same
+pairs labelled partial                             29             28   -1 better
+
+which mask each image actually used (cavity_model arm):
+  cavity_model                                             400
+
+why - region coverage and keypoints retained:
+  heuristic      mask covers  91.2% of frame, median ORB keypoints 840
+  cavity model   mask covers  70.4% of frame, median ORB keypoints 677
+
+runtime: heuristic 0.4 min, cavity model 3.4 min
+
+==============================================================================
+DELTA VALID-REGION SWEEP (step 4)
+==============================================================================
+Does using the cavity as the COMPARABLE region improve out-of-frame
+detection? Run with the better alignment arm held fixed.
+
+alignment.region_source held at: hsv_heuristic
+
+MAE is over the pairs that stayed comparable, so a variant that labels
+more pairs partial is scored on a smaller and easier subset. Read MAE
+next to n, never alone.
+
+valid_region_source       caught  missed  partial  over-flag   recall     MAE  n(MAE)
+------------------------------------------------------------------------------
+frame_intersection            17       0       29         12   100.0%    1.51     171
+cavity                        11       6      112        101   100.0%    1.96      88
+cavity_and_frame              17       0      122        105   100.0%    1.19      78
+
+out of 17 pairs that ground truth says are genuinely partly out of frame.
+
+OralTwin is a screening aid, not a diagnostic tool.

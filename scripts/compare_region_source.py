@@ -22,6 +22,8 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -140,6 +142,17 @@ def main():
     for name, count in sorted(path_counts(cav["rows"]).items(), key=lambda kv: -kv[1]):
         log(f"  {name:<56} {count}")
     log("")
+    log("why - region coverage and keypoints retained:")
+    for label, metrics in (("heuristic", hsv), ("cavity model", cav)):
+        fracs = [r[k] for r in metrics["rows"]
+                 for k in ("region_frac_visit1", "region_frac_visit2")
+                 if r.get(k) is not None]
+        kps = [r[k] for r in metrics["rows"] for k in ("n_kp1", "n_kp2")
+               if r.get(k) is not None]
+        if fracs:
+            log(f"  {label:<14} mask covers {100 * np.mean(fracs):5.1f}% of frame, "
+                f"median ORB keypoints {int(np.median(kps))}")
+    log("")
     log(f"runtime: heuristic {timings['hsv_heuristic'] / 60:.1f} min, "
         f"cavity model {timings['cavity_model'] / 60:.1f} min")
     log("")
@@ -156,8 +169,12 @@ def main():
                 else "hsv_heuristic")
     log(f"alignment.region_source held at: {best_arm}")
     log("")
+    log("MAE is over the pairs that stayed comparable, so a variant that labels")
+    log("more pairs partial is scored on a smaller and easier subset. Read MAE")
+    log("next to n, never alone.")
+    log("")
     log(f"{'valid_region_source':<24}{'caught':>8}{'missed':>8}{'partial':>9}"
-        f"{'over-flag':>11}{'recall':>9}{'MAE':>8}")
+        f"{'over-flag':>11}{'recall':>9}{'MAE':>8}{'n(MAE)':>8}")
     log("-" * 78)
     for region in VALID_REGIONS:
         cfg = variant(base, region_source=best_arm)
@@ -166,7 +183,7 @@ def main():
                                 write_artifacts=False)
         log(f"{region:<24}{m['n_caught']:>8}{m['n_missed']:>8}"
             f"{m['n_partial_pairs']:>9}{m['n_over_flagged']:>11}"
-            f"{m['recall']:>8.1f}%{m['mae']:>8.2f}")
+            f"{m['recall']:>8.1f}%{m['mae']:>8.2f}{m['n_both']:>8}")
         delta_metrics[f"vr_{region}"] = m
     log("")
     log(f"out of {dh['n_truly_out_of_frame']} pairs that ground truth says are "

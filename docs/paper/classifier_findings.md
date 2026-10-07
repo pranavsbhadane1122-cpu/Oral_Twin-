@@ -159,6 +159,28 @@ panel).*
   one patient photographed twice could span two splits.
 - **Environment.** v1 was trained on Colab (TensorFlow 2.20) and converted; v2 on
   CPU with TensorFlow 2.15. Hyperparameters were identical.
+- **A structural shortcut in the segmenter, distinct from the provenance ones.**
+  The Phase 3 U-Net's lesion channel failed its gate at Dice 0.362 against 0.70,
+  and the failure has a specific shape: the lesion head learned to outline the
+  mouth. Dice(predicted lesion, true *cavity*) is 0.494, higher than
+  Dice(predicted lesion, true lesion) at 0.362; per-image lesion Dice correlates
+  r = 0.777 with how much of the cavity the lesion happens to fill; and on
+  healthy images, where the correct output is nothing, the model paints a mean
+  15.5% of the frame. This differs in kind from the three provenance confounds
+  reported here. Those are properties of these datasets and a cleaner corpus
+  removes them. This one is intrinsic to the task geometry — a small region
+  nested inside a large one, with a per-pixel loss that pays far more for the
+  large one — so it would recur on any dataset of oral photographs. Loss
+  reweighting toward the lesion channel is the obvious remedy and was
+  deliberately **not** attempted: the gate failed, and retrying on the same test
+  split immediately after a failure would compromise the holdout that every
+  other number here depends on.
+- **The cavity segmenter does not transfer to the longitudinal pairs.** Its
+  Dice of 0.933 is an in-domain Piyarathne figure. Substituted for the HSV
+  heuristic as the alignment region of interest on MIO-derived pairs, it made
+  alignment worse on every error metric (median corner error 1.18 → 1.41 px,
+  p90 2.78 → 4.64). The heuristic was retained. A validated in-domain score is
+  not a licence to deploy out of domain.
 
 ## 6. Conclusion and next steps
 
