@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OralTwin</string>
+    <string name="disclaimer">OralTwin is a screening aid, not a diagnostic tool. It does not identify dental conditions. Any concern should be checked by a dentist.</string>
+</resources>

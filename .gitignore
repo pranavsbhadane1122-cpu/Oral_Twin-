@@ -4,3 +4,17 @@ models/*.h5
 __pycache__/
 *.tflite
 oraltwin_colab.zip
+
+# Android (android/) - the Gradle build generates a great deal of output
+android/build/
+android/.gradle/
+android/local.properties
+android/app/build/
+*.apk
+*.aab
+# Android Studio / IntelliJ
+android/.idea/
+android/*.iml
+android/.cxx/
+# the OpenCV SDK, if added by manual import rather than the Maven artifact
+android/opencv/
