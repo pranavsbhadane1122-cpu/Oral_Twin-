@@ -1,5 +1,7 @@
 venv/
-data/
+# anchored to the repository root: an unanchored 'data/' also matched the
+# Kotlin package android/.../com/oraltwin/app/data/ and silently dropped it
+/data/
 models/*.h5
 __pycache__/
 *.tflite
