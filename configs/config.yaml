@@ -109,6 +109,9 @@ licence:
     - docs/paper/figures
     - docs/demo_assets
     - app
+    # an APK is a published artifact like any other: anything under assets/
+    # ships to every phone that installs it
+    - android/app/src/main/assets
   phash_threshold: 8
 
 smartom:

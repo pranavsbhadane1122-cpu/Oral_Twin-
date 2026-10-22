@@ -1,0 +1,139 @@
+{
+  "note": "Test pairs for the Kotlin alignment port. Derived from the Kaggle Oral Diseases dataset via data/processed/classification. NOT Piyarathne-derived: no CC BY-NC-ND material is in this APK.",
+  "generated_by": "scripts/bundle_android_testpairs.py",
+  "python_median_corner_error_px": 1.1841,
+  "python_median_all_200_pairs_px": 1.183,
+  "gate": "Kotlin median corner error within 2x of the Python median",
+  "pairs": [
+    {
+      "pair": "pair_0111",
+      "source_class": "calculus",
+      "homography": [
+        [
+          1.0376990630489402,
+          0.04676085519959846,
+          -18.181556701660156
+        ],
+        [
+          0.019105212479539283,
+          1.0726563927030248,
+          2.945955276489258
+        ],
+        [
+          0.0001230525250899179,
+          0.0002606974133611125,
+          1.0
+        ]
+      ],
+      "python": {
+        "corner_error_px": 0.2884,
+        "confidence": 0.8739,
+        "n_inliers": 254
+      }
+    },
+    {
+      "pair": "pair_0107",
+      "source_class": "calculus",
+      "homography": [
+        [
+          0.9367465770975882,
+          0.15131302949401962,
+          1.2405946254730225
+        ],
+        [
+          -0.11810482155779682,
+          0.936499324249464,
+          24.07617950439453
+        ],
+        [
+          0.00012295185824065318,
+          4.0843410745296426e-05,
+          1.0
+        ]
+      ],
+      "python": {
+        "corner_error_px": 0.7888,
+        "confidence": 0.6954,
+        "n_inliers": 167
+      }
+    },
+    {
+      "pair": "pair_0085",
+      "source_class": "gingivitis",
+      "homography": [
+        [
+          0.9690413828395592,
+          -0.2656523755741143,
+          33.59163284301758
+        ],
+        [
+          0.2516678689412079,
+          0.9478160388945737,
+          -17.78603172302246
+        ],
+        [
+          0.0002667384849133963,
+          -0.000127528189317351,
+          1.0
+        ]
+      ],
+      "python": {
+        "corner_error_px": 1.1841,
+        "confidence": 0.6872,
+        "n_inliers": 229
+      }
+    },
+    {
+      "pair": "pair_0132",
+      "source_class": "caries",
+      "homography": [
+        [
+          0.9648765230974391,
+          0.0009010003135026486,
+          3.1414272785186768
+        ],
+        [
+          -0.04659156210165758,
+          0.935195214223869,
+          -0.22714470326900482
+        ],
+        [
+          -4.4959899321330805e-05,
+          -0.0001322783352914194,
+          1.0
+        ]
+      ],
+      "python": {
+        "corner_error_px": 2.1104,
+        "confidence": 0.734,
+        "n_inliers": 207
+      }
+    },
+    {
+      "pair": "pair_0118",
+      "source_class": "caries",
+      "homography": [
+        [
+          0.9493701935642869,
+          -0.20846346186431092,
+          25.19099235534668
+        ],
+        [
+          0.18651327929621359,
+          0.9053596144884377,
+          -8.238310813903809
+        ],
+        [
+          2.5647388705033557e-05,
+          -0.00023152673261529018,
+          1.0
+        ]
+      ],
+      "python": {
+        "corner_error_px": 2.7901,
+        "confidence": 0.6785,
+        "n_inliers": 149
+      }
+    }
+  ]
+}

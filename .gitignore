@@ -20,6 +20,11 @@ android/*.iml
 android/.cxx/
 # the OpenCV SDK, if added by manual import rather than the Maven artifact
 android/opencv/
+# Bundled Android test images. Kaggle-derived, and data/raw/LICENCES.md says
+# to check each Kaggle dataset page before redistributing anything derived
+# from them. Committing them here would publish them. Regenerate locally with
+# scripts/bundle_android_testpairs.py; the manifest (numbers only) is tracked.
+android/app/src/main/assets/testpairs/*.jpg
 # a Gradle distribution downloaded by configure-and-build.sh to bootstrap
 # the wrapper on a machine with no gradle installed
 android/.gradle-dist/

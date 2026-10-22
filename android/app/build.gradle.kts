@@ -59,6 +59,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    // declared explicitly rather than relied on transitively: the
+    // self-check runs ORB off the main thread via Dispatchers.Default
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // --- OpenCV ------------------------------------------------------------
