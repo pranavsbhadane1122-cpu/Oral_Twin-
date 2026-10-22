@@ -32,6 +32,38 @@ trusted. Those are the parts of the research project that passed their gates.
 
 ---
 
+## Installing Android Studio
+
+As of 22 Oct 2026 this machine has no Android toolchain: no Android Studio, no
+JDK, no SDK, no `adb`. Checked against the registry, the Start Menu, `winget`
+and a full scan of `C:\` for `studio64.exe` and `adb.exe`.
+
+Two things that look like an install and are not:
+
+- **`D:\Android`** is a connected TCL Android TV's storage
+  (`D:\Android\data\com.tcl.*`), not an installation.
+- **`RStudio-...exe`** in Downloads is RStudio, the R statistics IDE. Despite
+  the name it is an unrelated product and provides no JDK or Android SDK.
+
+To install:
+
+1. <https://developer.android.com/studio> and download for Windows (~1.1 GB)
+2. Run the installer, accepting the defaults
+3. **Open it once and let the first-run wizard finish.** This is the step that
+   downloads the SDK, the platform and the build-tools, another 2-3 GB. Until
+   it has run there is no SDK for Gradle to find.
+4. Then either press Run in Studio, or from Git Bash:
+
+   ```
+   cd android
+   ./configure-and-build.sh
+   ```
+
+   That script finds the bundled JDK and the SDK, writes `local.properties`,
+   obtains a Gradle if the wrapper jar is missing, and builds the debug APK.
+   It prints what it found before using it, so a wrong guess is visible
+   immediately rather than surfacing as a confusing Gradle error.
+
 ## Requirements
 
 | | |
@@ -240,10 +272,14 @@ Expect a few hundred keypoints. The exact number does not matter.
 
 ## Status
 
-**M0 has not been built or run by me.** This machine has no JDK, no Android
-SDK, no `adb` and no Android Studio, so the Gradle build has never been
-executed and the APK does not exist yet. The code is written to be correct but
-it is unverified, and a first Android sync commonly needs a version nudge.
+**M0 has not been built or run by me**, because there is no toolchain on this
+machine to build it with (see *Installing Android Studio* above). Gradle has
+never executed here and no APK exists. The code is written to be correct but
+it is **unverified**, and a first Android sync commonly wants a version nudge.
+
+The versions pinned here - AGP 8.7.3, Kotlin 2.0.21, compileSdk 35 - are
+deliberately conservative, chosen because they could not be tested. If Gradle
+asks for newer ones, that is expected and they should be taken.
 
 Tell me what the screen says — or paste the build error — and I will fix it
 before M1.

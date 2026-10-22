@@ -20,3 +20,6 @@ android/*.iml
 android/.cxx/
 # the OpenCV SDK, if added by manual import rather than the Maven artifact
 android/opencv/
+# a Gradle distribution downloaded by configure-and-build.sh to bootstrap
+# the wrapper on a machine with no gradle installed
+android/.gradle-dist/
