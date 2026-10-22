@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.oraltwin.app.camera.CameraScreen
+import com.oraltwin.app.capture.GuidedSession
 import com.oraltwin.app.comparison.ComparisonResult
 import com.oraltwin.app.comparison.ComparisonScreen
 import com.oraltwin.app.comparison.PairComparator
@@ -74,6 +75,9 @@ fun OralTwinApp(repository: PhotoRepository) {
     var lastSaveMessage by remember { mutableStateOf<String?>(null) }
     var comparison by remember { mutableStateOf<ComparisonResult?>(null) }
     var comparing by remember { mutableStateOf(false) }
+    // Session state only. Never written to Room: a photo taken with guidance
+    // must be indistinguishable downstream from one taken without.
+    var guided by remember { mutableStateOf<GuidedSession?>(null) }
     val scope = rememberCoroutineScope()
 
     // A comparison result takes over the whole screen. The UI does not decide
@@ -109,14 +113,23 @@ fun OralTwinApp(repository: PhotoRepository) {
 
         when (screen) {
             Screen.CAPTURE -> {
-                CameraScreen(onCaptured = { bytes ->
+                CameraScreen(
+                    session = guided,
+                    repository = repository,
+                    onEndGuidance = { guided = null },
+                    onCaptured = { bytes ->
                     scope.launch {
                         val saved = runCatching { repository.save(bytes) }
                         lastSaveMessage = saved.fold(
                             onSuccess = { "Saved ${it.filename} (${it.width} x ${it.height})" },
                             onFailure = { "Could not save the photo: ${it.javaClass.simpleName}" },
                         )
-                        if (saved.isSuccess) screen = Screen.TIMELINE
+                        // the reference is dropped once the photo is taken:
+                        // guidance is for framing, not a lasting relationship
+                        if (saved.isSuccess) {
+                            guided = null
+                            screen = Screen.TIMELINE
+                        }
                     }
                 })
                 lastSaveMessage?.let {
@@ -128,6 +141,10 @@ fun OralTwinApp(repository: PhotoRepository) {
             Screen.TIMELINE -> {
                 TimelineScreen(
                     repository = repository,
+                    onTakeFollowUp = { reference ->
+                        guided = GuidedSession(reference = reference)
+                        screen = Screen.CAPTURE
+                    },
                     onCompare = { pair ->
                         comparing = true
                         scope.launch {

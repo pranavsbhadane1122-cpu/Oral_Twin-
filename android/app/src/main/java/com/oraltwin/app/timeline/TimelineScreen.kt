@@ -72,6 +72,7 @@ const val PRIVACY_LINE = "Photos stay on this phone. Nothing is uploaded."
 fun TimelineScreen(
     repository: PhotoRepository,
     onCompare: (PairSelection) -> Unit = {},
+    onTakeFollowUp: (PhotoEntity) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val photos by repository.observeAll().collectAsState(initial = emptyList())
@@ -207,6 +208,13 @@ fun TimelineScreen(
         AlertDialog(
             onDismissRequest = { fullSize = null },
             confirmButton = {
+                TextButton(onClick = {
+                    val reference = photo
+                    fullSize = null
+                    onTakeFollowUp(reference)
+                }) { Text("Take a follow-up") }
+            },
+            dismissButton = {
                 TextButton(onClick = { fullSize = null }) { Text("Close") }
             },
             title = { Text(STAMP.format(Date(photo.capturedAtEpochMs))) },
