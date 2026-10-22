@@ -65,7 +65,18 @@ import java.util.Locale
 
 private val STAMP = SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
 
-const val PRIVACY_LINE = "Photos stay on this phone. Nothing is uploaded."
+/**
+ * Two sentences, because they are two different promises.
+ *
+ * "Nothing is uploaded" was true of the app and became misleading the moment a
+ * share button appeared beside it: the user can now send a photograph
+ * anywhere, and a single sentence would have been read as saying they could
+ * not. The first sentence is a guarantee the manifest enforces - there is no
+ * INTERNET permission, so the app cannot transmit anything. The second is the
+ * user's own choice, and is worded as a consequence rather than a warning.
+ */
+const val PRIVACY_APP = "This app never sends your photos anywhere."
+const val PRIVACY_USER = "If you share one yourself, it leaves this phone."
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -90,9 +101,13 @@ fun TimelineScreen(
         Text("Your photos", style = MaterialTheme.typography.titleLarge)
         // true, and the reason nothing is written outside app-internal storage
         Text(
-            PRIVACY_LINE,
+            PRIVACY_APP,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
+        )
+        Text(
+            PRIVACY_USER,
+            style = MaterialTheme.typography.bodySmall,
         )
 
         if (photos.isEmpty()) {

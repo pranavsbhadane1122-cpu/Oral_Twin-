@@ -41,6 +41,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // BuildConfig.DEBUG gates the self-check entry point
+        buildConfig = true
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -61,6 +63,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.3")
+    // FileProvider, for share-sheet export without any network permission
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     // declared explicitly rather than relied on transitively: the
     // self-check runs ORB off the main thread via Dispatchers.Default

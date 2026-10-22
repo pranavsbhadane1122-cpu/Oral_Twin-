@@ -53,6 +53,9 @@ interface PhotoDao {
     @Query("SELECT COUNT(*) FROM photos")
     suspend fun count(): Int
 
+    @Query("DELETE FROM photos")
+    suspend fun deleteAllRows(): Int
+
     // blocking variants, for the M0 stack check and instrumented assertions
     @Insert
     fun insertBlocking(photo: PhotoEntity): Long

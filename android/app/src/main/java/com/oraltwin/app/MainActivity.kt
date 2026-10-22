@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,12 +33,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.oraltwin.app.about.AboutScreen
 import com.oraltwin.app.camera.CameraScreen
 import com.oraltwin.app.capture.GuidedSession
 import com.oraltwin.app.comparison.ComparisonResult
 import com.oraltwin.app.comparison.ComparisonScreen
 import com.oraltwin.app.comparison.PairComparator
+import com.oraltwin.app.comparison.PairSelection
 import com.oraltwin.app.data.PhotoRepository
+import com.oraltwin.app.export.ComparisonExport
 import com.oraltwin.app.timeline.TimelineScreen
 import kotlinx.coroutines.launch
 
@@ -66,8 +72,22 @@ class MainActivity : ComponentActivity() {
 private enum class Screen(val label: String) {
     CAPTURE("Capture"),
     TIMELINE("Timeline"),
+    ABOUT("About"),
     CHECKS("Checks"),
 }
+
+/**
+ * Which tabs exist. The self-check is debug only.
+ *
+ * It has to stay reachable for the device gate, but a PASS/FAIL screen in a
+ * release build is either confusing or reassuring, and both are wrong. Taking
+ * it as a parameter rather than reading BuildConfig inline is what lets a test
+ * assert the release shape without building a release.
+ */
+internal fun screensFor(isDebug: Boolean): List<String> =
+    Screen.entries
+        .filter { it != Screen.CHECKS || isDebug }
+        .map { it.label }
 
 @Composable
 fun OralTwinApp(repository: PhotoRepository) {
@@ -78,13 +98,42 @@ fun OralTwinApp(repository: PhotoRepository) {
     // Session state only. Never written to Room: a photo taken with guidance
     // must be indistinguishable downstream from one taken without.
     var guided by remember { mutableStateOf<GuidedSession?>(null) }
+    var comparedPair by remember { mutableStateOf<PairSelection?>(null) }
+    var confirmDeleteAll by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val visibleScreens = remember { screensFor(BuildConfig.DEBUG) }
     val scope = rememberCoroutineScope()
 
     // A comparison result takes over the whole screen. The UI does not decide
     // which one it is: ComparisonScreen dispatches on the sealed type.
     val currentComparison = comparison
     if (currentComparison != null) {
-        ComparisonScreen(result = currentComparison, onBack = { comparison = null })
+        ComparisonScreen(
+            result = currentComparison,
+            onBack = { comparison = null },
+            onExport = {
+                val pair = comparedPair
+                if (pair != null) {
+                    scope.launch {
+                        runCatching {
+                            val bitmap = kotlinx.coroutines.withContext(
+                                kotlinx.coroutines.Dispatchers.Default
+                            ) {
+                                // renders the result the UI is already showing;
+                                // comparability is never re-derived
+                                ComparisonExport.render(
+                                    repository, pair.older, pair.newer,
+                                    currentComparison)
+                            }
+                            val uri = ComparisonExport.writeForSharing(context, bitmap)
+                            context.startActivity(
+                                android.content.Intent.createChooser(
+                                    ComparisonExport.shareIntent(uri), null))
+                        }
+                    }
+                }
+            },
+        )
         return
     }
 
@@ -102,7 +151,7 @@ fun OralTwinApp(repository: PhotoRepository) {
         }
 
         TabRow(selectedTabIndex = screen.ordinal) {
-            Screen.entries.forEach { entry ->
+            Screen.entries.filter { it.label in visibleScreens }.forEach { entry ->
                 Tab(
                     selected = screen == entry,
                     onClick = { screen = entry },
@@ -146,6 +195,7 @@ fun OralTwinApp(repository: PhotoRepository) {
                         screen = Screen.CAPTURE
                     },
                     onCompare = { pair ->
+                        comparedPair = pair
                         comparing = true
                         scope.launch {
                             comparison = runCatching {
@@ -169,7 +219,16 @@ fun OralTwinApp(repository: PhotoRepository) {
                 }
             }
 
+            Screen.ABOUT -> {
+                AboutScreen()
+                OutlinedButton(
+                    onClick = { confirmDeleteAll = true },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                ) { Text("Delete all my photos") }
+            }
+
             Screen.CHECKS -> {
+                // debug builds only; screensFor() keeps the tab out otherwise
                 StackCheckPanel()
                 SelfCheckScreen()
             }
@@ -183,6 +242,26 @@ fun OralTwinApp(repository: PhotoRepository) {
             style = MaterialTheme.typography.bodySmall,
         )
         Spacer(Modifier.height(16.dp))
+    }
+
+    if (confirmDeleteAll) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAll = false },
+            title = { Text("Delete everything?") },
+            text = {
+                Text("Every photo and every record of them will be removed from " +
+                         "this phone. This cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteAll = false
+                    scope.launch { repository.deleteAll() }
+                }) { Text("Delete everything") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAll = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

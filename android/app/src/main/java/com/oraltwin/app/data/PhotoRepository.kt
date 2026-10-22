@@ -89,6 +89,27 @@ class PhotoRepository(private val context: Context) {
         fileGone && !file.exists() && dao.byId(photo.id) == null
     }
 
+    /**
+     * Remove every photograph and every row.
+     *
+     * Returns true only when filesDir holds no images and the table is empty
+     * afterwards. "Delete all my data" is a promise that has to be checked,
+     * not a sequence of calls that were made: a failed File.delete() returns
+     * false quietly, and the user would never know.
+     */
+    suspend fun deleteAll(): Boolean = withContext(Dispatchers.IO) {
+        dao.deleteAllRows()
+        photosDir.listFiles()?.forEach { it.delete() }
+        exportsDir.listFiles()?.forEach { it.delete() }
+        val noFiles = (photosDir.listFiles()?.isEmpty() ?: true) &&
+            (exportsDir.listFiles()?.isEmpty() ?: true)
+        noFiles && dao.count() == 0
+    }
+
+    /** Where rendered exports go. Shared via FileProvider; never the photo store. */
+    val exportsDir: File
+        get() = File(context.filesDir, EXPORT_DIR).apply { if (!exists()) mkdirs() }
+
     /** Files with no row - possible if the process died between write and insert. */
     suspend fun removeOrphanFiles(): Int = withContext(Dispatchers.IO) {
         val known = dao.all().map { it.filename }.toSet()
@@ -124,6 +145,7 @@ class PhotoRepository(private val context: Context) {
     companion object {
         const val DB_NAME = "oraltwin.db"
         const val PHOTO_DIR = "photos"
+        const val EXPORT_DIR = "exports"
 
         fun filenameFor(epochMs: Long): String {
             val stamp = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US)

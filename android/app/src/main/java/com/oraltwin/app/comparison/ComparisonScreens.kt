@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -44,10 +45,14 @@ fun ComparisonScreen(
     result: ComparisonResult,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onExport: (() -> Unit)? = null,
 ) {
     when (result) {
-        is ComparisonResult.Comparable -> OverlayScreen(result, onBack, modifier)
-        is ComparisonResult.Refused -> RefusalScreen(result, onBack, modifier)
+        is ComparisonResult.Comparable -> OverlayScreen(result, onBack, modifier, onExport)
+        // A refusal is exportable too, and exports AS a refusal. Making it
+        // unexportable would teach the user that the export button means the
+        // app found something.
+        is ComparisonResult.Refused -> RefusalScreen(result, onBack, modifier, onExport)
     }
 }
 
@@ -56,6 +61,7 @@ private fun OverlayScreen(
     result: ComparisonResult.Comparable,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onExport: (() -> Unit)? = null,
 ) {
     var blend by remember { mutableFloatStateOf(0.5f) }
     var sideBySide by remember { mutableStateOf(false) }
@@ -113,6 +119,11 @@ private fun OverlayScreen(
         }
 
         Text(RefusalGuidance.DISCLAIMER, fontWeight = FontWeight.Medium)
+        onExport?.let {
+            OutlinedButton(onClick = it, modifier = Modifier.fillMaxWidth()) {
+                Text("Share these photos")
+            }
+        }
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 }
@@ -148,6 +159,7 @@ private fun RefusalScreen(
     result: ComparisonResult.Refused,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onExport: (() -> Unit)? = null,
 ) {
     // NO colour band here, of any shade. The Python demo shipped a green
     // "Low - nothing stood out as changed" on a refused comparison, and a
@@ -182,6 +194,11 @@ private fun RefusalScreen(
         }
 
         Text(RefusalGuidance.DISCLAIMER, fontWeight = FontWeight.Medium)
+        onExport?.let {
+            OutlinedButton(onClick = it, modifier = Modifier.fillMaxWidth()) {
+                Text("Share these photos")
+            }
+        }
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
             Text("Back to my photos")
         }

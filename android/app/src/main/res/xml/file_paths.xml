@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Only the exports directory is shared, never the photo store.
+
+  files-path with a narrow sub-path means a granted URI can reach the single
+  rendered export and nothing else. Pointing this at the whole of filesDir
+  would make every intraoral photograph reachable by any app that was handed
+  a URI, which is the opposite of what M1 set up.
+-->
+<paths>
+    <files-path name="exports" path="exports/" />
+</paths>

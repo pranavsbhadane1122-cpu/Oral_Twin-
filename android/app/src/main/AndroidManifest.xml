@@ -29,6 +29,22 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.OralTwin">
+        <!--
+          Sharing is FileProvider plus ACTION_SEND. The app writes a file and
+          grants a one-off read on a content:// URI; it transmits nothing
+          itself. This is why export needs no INTERNET permission, and why a
+          design that needed one would be the wrong design.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
