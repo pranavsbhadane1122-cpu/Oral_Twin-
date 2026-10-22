@@ -232,6 +232,15 @@ delta:
   # a lesion nearer than this to the edge of the two photos' overlap is only
   # partly visible in the newer photo, so its area cannot be compared fairly
   edge_margin_px: 3
+  # Share of the newer photograph that must have a counterpart in the aligned
+  # older one before the two are called comparable. Used by the Android app
+  # (android/.../comparison/Comparability.kt), which has no lesion masks - the
+  # segmenter failed its gate - so it asks the frame-overlap question instead
+  # of the per-lesion edge question above.
+  # PROVISIONAL: a reasoned default, NOT calibrated against data the way
+  # relative_color_thresh was. It should be swept once real repeat photographs
+  # exist. Until then treat it as an assumption, not a finding.
+  min_overlap_frac: 0.60
   reliability_high: 0.7        # confidence at/above this is "high"
   reliability_moderate: 0.5    # at/above this "moderate", below it "low"
   synthetic:

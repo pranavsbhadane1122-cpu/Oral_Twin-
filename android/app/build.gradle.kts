@@ -42,6 +42,9 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -85,6 +88,9 @@ dependencies {
     ksp("androidx.room:room-compiler:$room")
 
     testImplementation("junit:junit:4.13.2")
+    // ComparisonResultShapeTest inspects the sealed hierarchy; sealedSubclasses
+    // needs kotlin-reflect at runtime. Test scope only - not in the APK.
+    testImplementation(kotlin("reflect"))
 
     // Instrumented tests only: Room's generated code, the real filesystem and
     // the real PackageManager all behave differently under a desktop JVM, and
@@ -95,4 +101,8 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    // Compose UI tests: used to prove a refusal cannot reach the overlay
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

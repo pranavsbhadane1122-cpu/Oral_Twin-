@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.oraltwin.app.comparison.PairSelection
 import com.oraltwin.app.data.PhotoEntity
 import com.oraltwin.app.data.PhotoRepository
 import kotlinx.coroutines.Dispatchers
@@ -66,12 +71,15 @@ const val PRIVACY_LINE = "Photos stay on this phone. Nothing is uploaded."
 @Composable
 fun TimelineScreen(
     repository: PhotoRepository,
+    onCompare: (PairSelection) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val photos by repository.observeAll().collectAsState(initial = emptyList())
     var fullSize by remember { mutableStateOf<PhotoEntity?>(null) }
     var pendingDelete by remember { mutableStateOf<PhotoEntity?>(null) }
     var deleteError by remember { mutableStateOf<String?>(null) }
+    var selecting by remember { mutableStateOf(false) }
+    val selectedIds = remember { mutableStateListOf<Long>() }
     val scope = rememberCoroutineScope()
 
     Column(
@@ -94,9 +102,43 @@ fun TimelineScreen(
         } else {
             Text(
                 "${photos.size} photo${if (photos.size == 1) "" else "s"}. " +
-                    "Long-press one to delete it.",
+                    if (selecting) " Choose two to compare."
+                    else " Long-press one to delete it.",
                 style = MaterialTheme.typography.bodySmall,
             )
+
+            if (photos.size >= 2) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = {
+                        selecting = !selecting
+                        selectedIds.clear()
+                    }) {
+                        Text(if (selecting) "Cancel" else "Compare two photos")
+                    }
+                    if (selecting) {
+                        val chosen = photos.filter { it.id in selectedIds }
+                        val pair = PairSelection.from(chosen)
+                        Button(
+                            onClick = {
+                                pair?.let {
+                                    selecting = false
+                                    selectedIds.clear()
+                                    onCompare(it)
+                                }
+                            },
+                            // exactly two, enforced by PairSelection.from
+                            enabled = pair != null,
+                        ) { Text("Compare") }
+                    }
+                }
+                if (selecting) {
+                    Text(
+                        "Which is older is worked out from when each photo was " +
+                            "taken, not from the order you tap them.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
 
             deleteError?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall)
@@ -108,7 +150,20 @@ fun TimelineScreen(
                         Modifier
                             .fillMaxWidth()
                             .combinedClickable(
-                                onClick = { fullSize = photo },
+                                onClick = {
+                                    if (selecting) {
+                                        if (photo.id in selectedIds) {
+                                            selectedIds.remove(photo.id)
+                                        } else if (selectedIds.size < 2) {
+                                            selectedIds.add(photo.id)
+                                        }
+                                    } else {
+                                        fullSize = photo
+                                    }
+                                },
+                                // delete stays on long-press even while
+                                // selecting, so the gesture never changes
+                                // meaning under the user
                                 onLongClick = { pendingDelete = photo },
                             )
                     ) {
@@ -117,6 +172,18 @@ fun TimelineScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            if (selecting) {
+                                Checkbox(
+                                    checked = photo.id in selectedIds,
+                                    onCheckedChange = { want ->
+                                        if (want && selectedIds.size < 2) {
+                                            selectedIds.add(photo.id)
+                                        } else if (!want) {
+                                            selectedIds.remove(photo.id)
+                                        }
+                                    },
+                                )
+                            }
                             Thumbnail(repository, photo, Modifier.size(72.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(

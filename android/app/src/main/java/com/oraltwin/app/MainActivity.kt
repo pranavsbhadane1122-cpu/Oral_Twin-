@@ -31,6 +31,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.oraltwin.app.camera.CameraScreen
+import com.oraltwin.app.comparison.ComparisonResult
+import com.oraltwin.app.comparison.ComparisonScreen
+import com.oraltwin.app.comparison.PairComparator
 import com.oraltwin.app.data.PhotoRepository
 import com.oraltwin.app.timeline.TimelineScreen
 import kotlinx.coroutines.launch
@@ -69,7 +72,17 @@ private enum class Screen(val label: String) {
 fun OralTwinApp(repository: PhotoRepository) {
     var screen by remember { mutableStateOf(Screen.CAPTURE) }
     var lastSaveMessage by remember { mutableStateOf<String?>(null) }
+    var comparison by remember { mutableStateOf<ComparisonResult?>(null) }
+    var comparing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // A comparison result takes over the whole screen. The UI does not decide
+    // which one it is: ComparisonScreen dispatches on the sealed type.
+    val currentComparison = comparison
+    if (currentComparison != null) {
+        ComparisonScreen(result = currentComparison, onBack = { comparison = null })
+        return
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
@@ -112,7 +125,32 @@ fun OralTwinApp(repository: PhotoRepository) {
                 }
             }
 
-            Screen.TIMELINE -> TimelineScreen(repository)
+            Screen.TIMELINE -> {
+                TimelineScreen(
+                    repository = repository,
+                    onCompare = { pair ->
+                        comparing = true
+                        scope.launch {
+                            comparison = runCatching {
+                                PairComparator.compare(
+                                    repository, pair.older, pair.newer)
+                            }.getOrElse {
+                                // a failure to run the comparison is itself a
+                                // refusal, never a partial result
+                                ComparisonResult.refuse(
+                                    com.oraltwin.app.comparison
+                                        .ComparabilityCode.ALIGNMENT_FAILED)
+                            }
+                            comparing = false
+                        }
+                    },
+                )
+                if (comparing) {
+                    Text("Lining the two photos up...",
+                         Modifier.padding(horizontal = 20.dp),
+                         style = MaterialTheme.typography.bodySmall)
+                }
+            }
 
             Screen.CHECKS -> {
                 StackCheckPanel()
