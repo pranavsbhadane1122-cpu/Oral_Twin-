@@ -64,6 +64,34 @@ To install:
    It prints what it found before using it, so a wrong guess is visible
    immediately rather than surfacing as a confusing Gradle error.
 
+## Where photographs are stored, and why it matters
+
+Every JPEG is written under `Context.filesDir/photos` - app-internal storage.
+Not MediaStore, not `getExternalFilesDir`, not the shared Pictures collection.
+These are intraoral photographs: they must not appear in the camera roll, must
+not be picked up by a gallery scanner, and must not be swept into a cloud photo
+backup.
+
+Three mechanisms, none of which rely on remembering to do the right thing:
+
+1. **No `INTERNET` permission.** The manifest does not request it, and
+   declares `tools:node="remove"` so a dependency cannot merge one in
+   silently. Without it the process cannot open a socket, so no code path -
+   ours, a library's, or one added later by mistake - can upload anything.
+   `PermissionsTest` asserts this against the installed package, so a
+   regression fails a test instead of shipping.
+2. **`allowBackup="false"` plus explicit data-extraction rules.** Android's
+   auto-backup would otherwise copy `filesDir` to the user's Google Drive.
+   `res/xml/data_extraction_rules.xml` excludes files, databases and
+   preferences from both cloud backup and device-to-device transfer.
+3. **One writer.** CameraX captures into memory and hands the bytes to
+   `PhotoRepository`, which is the only thing that writes a photo file.
+   `ImageCapture.OutputFileOptions` can target MediaStore directly, so not
+   using it is what keeps these images out of the gallery by construction.
+
+Deleting a photo removes the row *and* the file, and `PhotoRepository.delete`
+returns true only after confirming the file is genuinely gone from disk.
+
 ## Requirements
 
 | | |

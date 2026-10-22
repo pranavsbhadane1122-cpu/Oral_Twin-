@@ -105,8 +105,12 @@ object StackCheck {
             .allowMainThreadQueries()   // M0 self-test only; M1 uses coroutines
             .build()
         val dao = db.photoDao()
-        dao.insert(PhotoEntity(capturedAtEpochMs = 1_700_000_000_000, relativePath = "selftest.jpg"))
-        val rows = dao.count()
+        dao.insertBlocking(
+            PhotoEntity(filename = "selftest.jpg",
+                        capturedAtEpochMs = 1_700_000_000_000,
+                        width = 1, height = 1)
+        )
+        val rows = dao.countBlocking()
         db.close()
         "OK - wrote and read back $rows row"
     } catch (t: Throwable) {

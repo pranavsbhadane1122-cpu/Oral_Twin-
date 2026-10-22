@@ -1,14 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Declared now because M1 adds guided capture. The M0 screen does not
-         open the camera, and Android will not grant this until asked at
-         runtime. No INTERNET permission: photographs never leave the phone. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
+    <!--
+      NO INTERNET PERMISSION, DELIBERATELY AND BY CONSTRUCTION.
+
+      "Photos stay on this phone" is enforced here rather than promised in a
+      sentence: without this permission the process cannot open a socket, so
+      no code path - ours, a library's, or one added later by mistake - can
+      upload anything. The tools:node="remove" below makes that survive
+      manifest merging, which is the realistic way the permission would
+      otherwise creep back in: any dependency declaring INTERNET would have it
+      merged into our manifest silently.
+
+      PermissionsTest asserts the installed package holds no INTERNET
+      permission, so a regression fails a test rather than shipping.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+
     <application
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
         android:icon="@android:drawable/ic_menu_camera"
         android:label="@string/app_name"
         android:supportsRtl="true"

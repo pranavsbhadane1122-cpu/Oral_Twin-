@@ -14,38 +14,126 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.oraltwin.app.camera.CameraScreen
+import com.oraltwin.app.data.PhotoRepository
+import com.oraltwin.app.timeline.TimelineScreen
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var repository: PhotoRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Load OpenCV before any Compose code can touch a Mat.
-        StackCheck.ensureOpenCv()
+        StackCheck.ensureOpenCv()   // before any Mat is constructed
+        repository = PhotoRepository(applicationContext)
+
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    StackCheckScreen()
+                    OralTwinApp(repository)
                 }
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        repository.close()
+    }
+}
+
+private enum class Screen(val label: String) {
+    CAPTURE("Capture"),
+    TIMELINE("Timeline"),
+    CHECKS("Checks"),
 }
 
 @Composable
-fun StackCheckScreen() {
+fun OralTwinApp(repository: PhotoRepository) {
+    var screen by remember { mutableStateOf(Screen.CAPTURE) }
+    var lastSaveMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
+            Text("OralTwin", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "Take a photo at each visit and compare it with your last one. " +
+                    "This app does not identify dental conditions.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        TabRow(selectedTabIndex = screen.ordinal) {
+            Screen.entries.forEach { entry ->
+                Tab(
+                    selected = screen == entry,
+                    onClick = { screen = entry },
+                    text = { Text(entry.label) },
+                )
+            }
+        }
+
+        when (screen) {
+            Screen.CAPTURE -> {
+                CameraScreen(onCaptured = { bytes ->
+                    scope.launch {
+                        val saved = runCatching { repository.save(bytes) }
+                        lastSaveMessage = saved.fold(
+                            onSuccess = { "Saved ${it.filename} (${it.width} x ${it.height})" },
+                            onFailure = { "Could not save the photo: ${it.javaClass.simpleName}" },
+                        )
+                        if (saved.isSuccess) screen = Screen.TIMELINE
+                    }
+                })
+                lastSaveMessage?.let {
+                    Text(it, Modifier.padding(horizontal = 20.dp),
+                         style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            Screen.TIMELINE -> TimelineScreen(repository)
+
+            Screen.CHECKS -> {
+                StackCheckPanel()
+                SelfCheckScreen()
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "This app does not detect disease. It contains no trained model of " +
+                "any kind. Any concern should be checked by a dentist.",
+            modifier = Modifier.padding(horizontal = 20.dp),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+/** The M0 build check: proves the native libraries actually loaded. */
+@Composable
+fun StackCheckPanel() {
     val context = LocalContext.current
     var orb by remember { mutableStateOf<StackCheck.OrbResult?>(null) }
     val openCvVersion = remember { StackCheck.openCvVersion() }
@@ -55,31 +143,23 @@ fun StackCheckScreen() {
     val room = remember { StackCheck.roomCheck(context) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("OralTwin", style = MaterialTheme.typography.headlineMedium)
+        Text("Build check", style = MaterialTheme.typography.titleLarge)
         Text(
-            "M0 - build check. This screen exists to prove the libraries load on " +
-                "a real phone. It does not take or read photographs.",
-            style = MaterialTheme.typography.bodyMedium,
+            "Proves the libraries load on this phone. Not part of normal use.",
+            style = MaterialTheme.typography.bodySmall,
         )
-
-        Spacer(Modifier.height(4.dp))
 
         InfoCard("Device") {
             Line(device)
             Line("ABIs: $abis")
         }
-
         InfoCard("OpenCV") {
             Line("version: $openCvVersion")
             Line("read from the library at runtime, not hardcoded")
         }
-
         InfoCard("CameraX") { Line(cameraX) }
         InfoCard("Room") { Line(room) }
 
@@ -93,23 +173,10 @@ fun StackCheckScreen() {
                 Line("keypoints found: ${result.keypoints}")
                 Line(result.detail)
                 if (result.ok && result.keypoints > 0) {
-                    Line("OpenCV's native features2d module is working.")
-                } else if (result.ok) {
-                    Line("ORB ran but found nothing - unexpected for this test image.")
+                    Line("OpenCV native features2d is working.")
                 }
             }
         }
-
-        Spacer(Modifier.height(8.dp))
-        HorizontalDivider()
-        SelfCheckScreen()
-
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "This app does not detect disease. It contains no trained model of " +
-                "any kind. Any concern should be checked by a dentist.",
-            style = MaterialTheme.typography.bodySmall,
-        )
     }
 }
 

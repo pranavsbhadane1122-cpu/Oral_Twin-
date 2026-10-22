@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">OralTwin</string>
     <string name="disclaimer">OralTwin is a screening aid, not a diagnostic tool. It does not identify dental conditions. Any concern should be checked by a dentist.</string>
+    <string name="privacy_line">Photos stay on this phone. Nothing is uploaded.</string>
+    <string name="camera_rationale">OralTwin needs the camera to take the photograph you are about to compare with your previous one. The photo is saved only on this phone, in storage that belongs to this app alone. It is not added to your gallery, it is not backed up, and it is never uploaded anywhere. You can delete any photo from the timeline.</string>
 </resources>
