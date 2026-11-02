@@ -31,6 +31,7 @@ from src.risk.risk_rules import (  # noqa: E402
 from src.utils.config import load_config  # noqa: E402
 
 # The single authority. Imported, never retyped - that is the whole point.
+from tests.source_scan import excluding_lines  # noqa: E402
 from tests.test_caption import CONDITION_RE, CONDITION_WORDS  # noqa: E402
 
 CFG = load_config()
@@ -268,14 +269,17 @@ class TestVocabulary(unittest.TestCase):
     def test_the_guard_is_imported_not_retyped(self):
         """A second copy of the list would be the drift CLAIMS.md warns about.
 
-        Checked by looking for a DEFINITION of the list rather than for any
-        single term: an earlier version of this test searched its own source
-        for a term and found the literal it was searching with.
+        Read through excluding_lines() with a marker, because this assertion
+        inspects the very file it lives in. Two earlier versions got this
+        wrong: one searched for a condition term and matched the term it was
+        searching with, the next searched for a pattern that happened not to
+        match its own text - passing by an accident of backslash escaping
+        rather than by being right.
         """
-        source = (PROJECT_ROOT / "tests" / "test_explain.py").read_text("utf-8")
+        source = excluding_lines(Path(__file__), "self-scan-ok")
         self.assertIn("from tests.test_caption import", source)
         self.assertIsNone(
-            re.search(r"CONDITION_WORDS\s*=\s*\[", source),
+            re.search(r"CONDITION_WORDS\s*=\s*\[", source),   # self-scan-ok
             "this file defines its own CONDITION_WORDS; it must import the "
             "single authority in tests/test_caption.py instead")
 

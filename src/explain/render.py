@@ -18,6 +18,26 @@ Sections 1 and 7 render on every report, comparable or refused. Section 1 is the
 photograph, not to the photograph and not to the person. Section 7 is what the
 output does not say, generated from one constant so it cannot drift between
 report types.
+
+THE RULE FOR REFUSALS
+---------------------
+
+    A refusal renders no number DERIVED FROM THE IMAGES.
+
+That is the principle. It was previously written as "a refusal contains no
+digit", which was a proxy for it - and a bad one, because it is unsatisfiable:
+section 1 must say which two photographs were compared, and a date contains
+digits. A date is a fact about which photographs were used, not a measurement
+taken from them, so it is not what the rule is protecting against.
+
+What the rule does forbid, on a refusal: the alignment confidence, any area,
+any percentage, any colour magnitude, and the pixel coordinates of a region -
+the last because coordinates answer "where was this number computed" and on a
+refusal no number was computed, so there is nothing to locate.
+
+The practical test of the principle: could a reader divide it by something, or
+compare it with a figure from another visit? If yes, it is derived from the
+images and must not appear on a refusal.
 """
 
 from src.explain import claims

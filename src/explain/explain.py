@@ -53,6 +53,39 @@ MEASUREMENT_NAMES = {
 UNITS = {"area_change_pct": "%", "area_visit1_px": " pixels",
          "area_visit2_px": " pixels"}
 
+# Derived figures are rounded to ONE DECIMAL AT MOST before a reader sees them.
+#
+# 71.48% claims precision the pipeline does not have. At the median alignment
+# corner error of 1.18 px, a coherent one-pixel misplacement of the boundary of
+# a median 1,792 px region (radius ~24 px, circumference ~150 px) moves the
+# measured area by roughly 177 px - about 10% of the region. Two decimal places
+# assert a hundredth of a percent on a quantity whose uncertainty is nearer ten
+# percent.
+#
+# That bound is pessimistic: it assumes the whole boundary shifts coherently,
+# whereas homography error is usually smallest near the image centre where
+# these regions sit. It is an upper bound, not a point estimate. Even so, the
+# second decimal is indefensible and the first is generous.
+# Percentages and magnitudes: one decimal. Ratios in [0, 1]: two.
+#
+# A ratio needs the second decimal because the first destroys it - an overlap
+# of 0.9723 rounded to one decimal is 1.0, which _fmt renders as "1" and a
+# reader takes as a perfect overlap. That is worse than false precision: it is
+# a false claim. Caught by the baseline drift gate on the change that
+# introduced it.
+DERIVED_ONE_DP = {"area_change_pct", "color_magnitude"}
+DERIVED_TWO_DP = {"match_iou"}
+
+
+def _display(key, value):
+    """How a value is shown. Rounds derived quantities; leaves counts alone."""
+    if isinstance(value, float):
+        if key in DERIVED_ONE_DP:
+            value = round(value, 1)
+        elif key in DERIVED_TWO_DP:
+            value = round(value, 2)
+    return f"{_fmt(value)}{UNITS.get(key, '')}"
+
 
 # --------------------------------------------------------------------------
 # The risk statement.
@@ -114,7 +147,7 @@ def _measurements(lesion, confidence):
             "key": key,
             "name": MEASUREMENT_NAMES.get(key, key),
             "value": value,
-            "display": f"{_fmt(value)}{UNITS.get(key, '')}",
+            "display": _display(key, value),
         })
     return out
 
@@ -164,7 +197,7 @@ def _counterfactual(spec, measured, cfg):
     return {
         "threshold": threshold,
         "measured": measured,
-        "margin": round(float(measured) - float(threshold), 2),
+        "margin": round(float(measured) - float(threshold), 1),
         "text": (f"This would have been one band lower if "
                  f"{spec.measurement_name} had been below "
                  f"{_fmt(threshold)}{unit}{caveat}."),
