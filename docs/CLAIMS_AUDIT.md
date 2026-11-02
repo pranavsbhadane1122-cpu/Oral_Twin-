@@ -56,20 +56,21 @@ machine is dated 27-09-2026.** The nearest OralTwin artefact is
 
 ### Search scope, recorded so the three NOT FOUND claims are auditable
 
-A recursive search of , ,  and  for
-every , , ,  and  returned **no OralTwin
+A recursive search of `Desktop`, `Downloads`, `Documents` and `OneDrive` for
+every `.docx`, `.doc`, `.tex`, `.pdf` and `.pptx` returned **no OralTwin
 document beyond the seven above**. Desktop: none. Documents: two unrelated R
 package manuals. OneDrive: empty.
 
-Three near-miss files were opened and ruled out rather than assumed irrelevant:
-,  and
- are all about **ICT use in European secondary
+Five near-miss files were opened and ruled out rather than assumed irrelevant.
+`Literature Review.docx`, `Literature_Review_Revised.docx` and
+`Methodology_Log_Secondary.docx` are all about **ICT use in European secondary
 schools** (Politecnico di Milano) and mention OralTwin zero times.
- and  likewise mention it zero
+`PROJECT_ARCHIVE.docx` and `PROJECT_ARCHIVE_v2.docx` likewise mention it zero
 times and contain no images.
 
 Two further PDFs in Downloads are third-party literature, not project
-documents: a scoping review of AI/ML in oral cancer detection, and .
+documents: a scoping review of AI/ML in oral cancer detection, and
+`paper 1.pdf`.
 
 The words "biopsy", "Diagnostic category", "High-Grade" appear in **no**
 OralTwin document. If that flowchart exists it is somewhere I cannot see — a
