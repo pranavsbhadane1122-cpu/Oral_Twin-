@@ -1,0 +1,44 @@
+# INDUCED REFUSAL, not a natural one. No pair in data/longitudinal
+# fails alignment on its own (200 of 200 succeed), so this baseline was
+# produced by raising delta.confidence_floor to 0.99 for
+# pair_0012 alone. Everything below the marker is the rendered report.
+# ---8<--- report starts here
+====================================================================
+ORALTWIN VISIT COMPARISON - pair_0012
+====================================================================
+
+WHAT THE PHOTOS SHOW
+  Condition screening is switched off in this build.
+  (The condition model is parked pending better training data, so this report
+   describes CHANGE between the two photos only, and names no condition.)
+
+WHAT CHANGED SINCE LAST VISIT
+  Could not compare: alignment confidence 0.62 is below the floor 0.99; the two photos could not be lined up well enough to compare them.
+
+SCREENING BAND: Not assessed
+
+  These two photographs could not be compared, so nothing can be said about what changed.
+  - alignment confidence 0.62 is below the floor 0.99; the two photos could not be lined up well enough to compare them.
+  Some of this could not be compared reliably - retake the photo with the same framing and lighting, and the whole area in view.
+
+  Why this band: no change rule was triggered.
+
+--------------------------------------------------------------------
+
+WHY YOU ARE NOT SEEING A RESULT
+
+The two photographs could not be lined up well enough to compare them.
+Retake the newer photo in better, even light, holding the phone still.
+
+No comparison was made, so there is nothing to report.
+
+Have this checked by a dentist.
+
+BACKGROUND
+  General context, not a prediction about you: population studies report an association between gum disease and cardiovascular disease and diabetes (Sanz et al., J Clin Periodontol 2020; Preshaw et al., Diabetologia 2012). Looking after your gums is worthwhile regardless of what this screening shows.
+
+NEXT STEP
+  Book a check-up and show these photos to your dentist.
+
+--------------------------------------------------------------------
+OralTwin is a screening aid, not a diagnostic tool. It cannot diagnose anything. Have any finding checked by a dentist.

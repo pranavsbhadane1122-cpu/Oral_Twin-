@@ -1,0 +1,62 @@
+====================================================================
+ORALTWIN VISIT COMPARISON - pair_0002
+====================================================================
+
+WHAT THE PHOTOS SHOW
+  Condition screening is switched off in this build.
+  (The condition model is parked pending better training data, so this report
+   describes CHANGE between the two photos only, and names no condition.)
+
+WHAT CHANGED SINCE LAST VISIT
+  1 area(s) changed noticeably since the last visit - OralTwin is a screening aid, not a diagnostic tool. Have any finding checked by a dentist.
+  - spot 0: area grew ~42% since the last visit, confidence 0.83 - have this checked by a dentist
+  (photo alignment confidence 0.83)
+
+SCREENING BAND: Elevated
+
+  A clear change stands out between these two photos.
+  - a spot grew about 42% in area since the last visit (threshold 30%)
+  Have this checked by a dentist.
+
+  Why this band (explicit rules):
+    [AREA_GROWTH_LARGE] (Elevated) a spot grew about 42% in area since the last visit (threshold 30%)
+
+--------------------------------------------------------------------
+
+WHY THIS RESULT
+
+A clear change stands out between these two photos.
+
+What was measured
+  - how much the marked area grew or shrank since the last visit: 42.21%
+  - the size of the marked area at the earlier visit: 1734 pixels
+  - the size of the marked area at this visit: 2466 pixels
+  - how much the colour of the marked area changed compared with the tissue around it: 9.43
+  - how well the marked areas in the two photos overlap: 0.7032
+  - whether the marked area is new, matched or no longer visible: matched
+  - how well the two photographs lined up: 0.83
+
+What decided it
+  The band was set by how much the marked area grew since the last visit.
+
+The rules that applied
+  - This counts as elevated when how much the marked area grew since the last visit is at least 30%. (this one set the band)
+      That threshold is a reasoned default, not a value settled by data.
+
+What would have changed it
+  This would have been one band lower if how much the marked area grew since the last visit had been below 30%, where 30% is a reasoned default, not a value settled by data.
+
+Where the number came from
+  The marked region in the earlier photo.
+  This records where this measurement was computed, not where a model looked.
+
+Have this checked by a dentist.
+
+BACKGROUND
+  General context, not a prediction about you: population studies report an association between gum disease and cardiovascular disease and diabetes (Sanz et al., J Clin Periodontol 2020; Preshaw et al., Diabetologia 2012). Looking after your gums is worthwhile regardless of what this screening shows.
+
+NEXT STEP
+  Book a check-up and show these photos to your dentist.
+
+--------------------------------------------------------------------
+OralTwin is a screening aid, not a diagnostic tool. It cannot diagnose anything. Have any finding checked by a dentist.
