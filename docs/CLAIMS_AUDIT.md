@@ -54,6 +54,23 @@ mentions OralTwin at all**, and neither contains any image). **No file on this
 machine is dated 27-09-2026.** The nearest OralTwin artefact is
 `OralTwin_Project_Report.docx` at 24-09-2026.
 
+### Search scope, recorded so the three NOT FOUND claims are auditable
+
+A recursive search of , ,  and  for
+every , , ,  and  returned **no OralTwin
+document beyond the seven above**. Desktop: none. Documents: two unrelated R
+package manuals. OneDrive: empty.
+
+Three near-miss files were opened and ruled out rather than assumed irrelevant:
+,  and
+ are all about **ICT use in European secondary
+schools** (Politecnico di Milano) and mention OralTwin zero times.
+ and  likewise mention it zero
+times and contain no images.
+
+Two further PDFs in Downloads are third-party literature, not project
+documents: a scoping review of AI/ML in oral cancer detection, and .
+
 The words "biopsy", "Diagnostic category", "High-Grade" appear in **no**
 OralTwin document. If that flowchart exists it is somewhere I cannot see — a
 slide deck, an email, or another machine. **It should be found before anything
