@@ -104,6 +104,21 @@ def build_report(pair_name, change_report, risk, prediction_visit1=None,
         lines.append("  Warm colours mark the regions that most influenced the model. "
                      "On the change map, red gained attention and blue lost it.")
 
+    # The full account of why this landed where it did. Generated from the
+    # rule definitions and docs/CLAIMS.md, and reporting the result it was
+    # handed rather than recomputing anything.
+    try:
+        from src.explain.explain import explain as build_explanation
+        from src.explain.render import render as render_explanation
+
+        explanation = build_explanation(change_report, risk, cfg)
+        lines += ["", "-" * 68, ""]
+        lines += render_explanation(explanation).splitlines()
+    except Exception as exc:                            # noqa: BLE001
+        # A broken explanation must not suppress the report it explains, but it
+        # must be visible rather than silently absent.
+        lines += ["", f"[explanation unavailable: {type(exc).__name__}: {exc}]"]
+
     lines += ["", "BACKGROUND", f"  {risk['context_note']}"]
     if risk["band"] != LOW:
         lines += ["", "NEXT STEP", "  Book a check-up and show these photos to your dentist."]

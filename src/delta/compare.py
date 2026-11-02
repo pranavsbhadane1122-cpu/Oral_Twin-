@@ -72,7 +72,14 @@ def components(mask, min_area):
     for label in range(1, n):
         area = int(stats[label, cv2.CC_STAT_AREA])
         if area >= min_area:
+            # The bounding box comes free from connectedComponentsWithStats and
+            # is carried through so src/explain/ can say WHERE a measurement was
+            # computed. It is a computation record, not an attention claim.
             out.append({"label": label, "area": area,
+                        "bbox": [int(stats[label, cv2.CC_STAT_LEFT]),
+                                 int(stats[label, cv2.CC_STAT_TOP]),
+                                 int(stats[label, cv2.CC_STAT_WIDTH]),
+                                 int(stats[label, cv2.CC_STAT_HEIGHT])],
                         "mask": (labels == label).astype(np.uint8)})
     return out
 
@@ -357,6 +364,8 @@ def compare(mask1, mask2_warped, img1, img2_warped, confidence, cfg=None, valid_
             "state": "matched",
             "comparability": base_comparability,
             "match_iou": round(float(iou), 4),
+            "bbox_visit1": c1.get("bbox"),
+            "bbox_visit2": c2.get("bbox"),
             "area_visit1_px": c1["area"],
             "area_visit2_px": c2["area"],
             "area_change_pct": round(change_pct, 2),

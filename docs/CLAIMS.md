@@ -353,35 +353,58 @@ a known weakness, recorded here rather than hidden.
 
 ---
 
-## 4. Provisional parameters
+## 4. Parameter provenance
 
 Separating reasoned defaults from calibrated values. A provisional number and a
 calibrated number look identical in a config file, and only one of them is
 evidence.
 
-### Calibrated — has data behind it
+**Three states**, and the distinction between the first two matters:
 
-| Parameter | Value | What settled it |
-|---|---|---|
-| `delta.relative_color_thresh` | 28.0 | p95 of relative-colour magnitude over **97 no-change lesions** = 27.47, rounded up. `data/processed/delta/color_calibration.json`. Yields a 4.1% flag rate, since improved to 3.2%. |
-| `dedup.phash_threshold` | 8 | Swept; 10 chained unrelated images into a 364-image cluster. Reduced to 6 for clustering, 8 retained for the licence guard. |
-| `dedup.family_phash_threshold` | 14 | Set from the augmentation-family analysis in the Phase 1 audit. |
+| State | Meaning |
+|---|---|
+| `calibrated` | Evidence exists **and is written up as a logged run**. |
+| `artefact only` | Evidence exists in a named artefact file, but was **never logged as a run** in `models/logs/experiments.md`. Real evidence, weaker provenance. |
+| `provisional` | A reasoned default with **no data behind it**. An assumption. |
 
-### Provisional — reasoned default, no calibration
+`src/explain/` parses this table at runtime. The `key` column is the dotted
+config path and is what the parser matches on; do not reword it. A threshold
+used by a risk rule and missing from this table makes
+`tests/test_explain.py::test_every_rule_threshold_is_registered` fail — an
+unregistered threshold deciding a band is the exact thing this register was
+built to catch.
 
-| Parameter | Value | What it needs to be settled |
-|---|---|---|
-| **`delta.min_overlap_frac`** | 0.60 | **Real repeat photographs of the same mouth.** Added 2026-10-22 for the Android comparability code, which has no lesion masks and so asks a frame-overlap question instead of a per-lesion edge question. The config comment already marks it PROVISIONAL. Needs a sweep against pairs where a human has judged whether enough of the area is in frame. |
-| **`MatchIndicator.SCALE`** | 40.0 | **Nothing — and that is the point.** It is a presentation constant that stretches a bar, not a threshold. Stated here so nobody later mistakes it for one. It cannot create a state the bar did not have, because the mapping contains no comparison. If the bar reads badly on a real phone, change it freely. |
-| `delta.confidence_floor` | 0.3 | A human judgement of which alignments are too poor to compare. Currently a reasoned cut on an unvalidated scale — and note §1.6: the confidence score's **ranking** ability regressed to −0.387, which weakens any threshold on it. |
-| `delta.change_area_thresh` | 0.10 | What size of area change a clinician considers worth noting. No clinical input has been obtained. |
-| `delta.compactness_change_thresh` | 0.15 | Moot — the edge metric is excluded from all output (30.9% false-flag). |
-| `delta.edge_margin_px` | 3 | Chosen to be small; never swept. |
-| `delta.match_iou_thresh` | 0.10 | Never swept. |
-| `segmentation.bce_weight` | 0.5 | Never swept. **Loss reweighting toward the lesion channel is named future work and was deliberately left untested** — retrying on the same holdout immediately after a gate failure would compromise it. experiments.md 2026-10-07. |
-| `alignment.cavity_*` (threshold, min area, dilate) | 0.5 / 0.05 / 6 | Moot — the cavity path lost its A/B and is retained only so the result can be rechecked. |
+<!-- PARAMETER-TABLE-START -->
 
----
+| key | value | state | evidence, or what it needs to be settled |
+|---|---|---|---|
+| `delta.relative_color_thresh` | 28.0 | `artefact only` | p95 of relative-colour magnitude over **97 no-change lesions** = 27.47, rounded up. Lives in `data/processed/delta/color_calibration.json` and **is not written up as a run** in experiments.md, so it does not qualify as calibrated. To promote it: write the calibration up as a logged run. |
+| `dedup.phash_threshold` | 8 | `artefact only` | Swept; 10 chained unrelated images into a 364-image cluster. The sweep is not in experiments.md. |
+| `dedup.family_phash_threshold` | 14 | `artefact only` | Set from the Phase 1 augmentation-family analysis; recorded in `audit_report.txt`, not as a run. |
+| `risk.growth_moderate_pct` | 10.0 | `provisional` | What size of area change a clinician considers worth a professional look. **No clinical input has been obtained.** Needs a clinician to set it. |
+| `risk.growth_elevated_pct` | 30.0 | `provisional` | As above, for a clear change. Needs a clinician to set it. |
+| `risk.escalate_on_rule_count` | 2 | `provisional` | How many Moderate signals together should read as one Elevated. Never swept; needs outcome data that does not exist. |
+| `risk.condition_prob_high` | 0.70 | `provisional` | Moot while `surface_predictions: false` - no rule using it can fire. |
+| `delta.confidence_floor` | 0.3 | `provisional` | A human judgement of which alignments are too poor to compare. Note §1.6: the confidence score's **ranking** ability regressed to -0.387, which weakens any threshold placed on it. Needs a sweep against human judgements of alignment quality. |
+| `delta.min_overlap_frac` | 0.60 | `provisional` | **Real repeat photographs of the same mouth.** Added 2026-10-22 for the Android comparability code, which has no lesion masks and asks a frame-overlap question instead of a per-lesion edge question. |
+| `delta.change_area_thresh` | 0.10 | `provisional` | What counts as a notable area change. No clinical input. |
+| `delta.compactness_change_thresh` | 0.15 | `provisional` | Moot - the edge metric is excluded from all output (30.9% false-flag). |
+| `delta.edge_margin_px` | 3 | `provisional` | Chosen to be small; never swept. |
+| `delta.match_iou_thresh` | 0.10 | `provisional` | Never swept. |
+| `segmentation.bce_weight` | 0.5 | `provisional` | Never swept. **Loss reweighting toward the lesion channel is named future work and was deliberately left untested** - retrying on the same holdout immediately after a gate failure would compromise it. experiments.md 2026-10-07. |
+| `alignment.cavity_threshold` | 0.5 | `provisional` | Moot - the cavity path lost its A/B and is retained only so the result can be rechecked. |
+| `alignment.cavity_min_area_frac` | 0.05 | `provisional` | As above. |
+| `alignment.cavity_dilate_px` | 6 | `provisional` | As above. |
+| `MatchIndicator.SCALE` | 40.0 | `provisional` | **Needs nothing, and that is the point.** It stretches a bar; it is not a threshold. The mapping contains no comparison, so it cannot create a state the bar did not have. Listed so nobody later mistakes it for a threshold and starts tuning it. |
+
+<!-- PARAMETER-TABLE-END -->
+
+**Nothing in this project is currently `calibrated`.** Every parameter with
+evidence behind it has that evidence in an artefact file rather than in a
+logged run. That is a consequence of finding 1 in
+[What I expected to find and could not](#what-i-expected-to-find-and-could-not),
+and it is why the explanation layer says `artefact only` instead of rounding up
+to calibrated.
 
 ## 5. What this project does not do
 

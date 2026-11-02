@@ -67,6 +67,114 @@ BAND_TEXT = {
 }
 
 
+# --------------------------------------------------------------------------
+# RULE SPECIFICATIONS - the single definition of every rule
+# --------------------------------------------------------------------------
+# Each rule is declared ONCE, here, and both the firing logic below and
+# src/explain/ read these specs. The alternative - a readable sentence written
+# by hand beside each rule - is two copies of the same rule, and two copies
+# disagree eventually: someone changes the threshold and the sentence keeps
+# quoting the old one, which is worse than no sentence at all.
+#
+# threshold_key is the dotted config path AND the key the explanation layer
+# looks up in docs/CLAIMS.md, so a rule cannot reference a threshold whose
+# provenance is unregistered without a test noticing.
+
+class RuleSpec:
+    """One rule, declared once."""
+
+    def __init__(self, rule_id, level, measurement, measurement_name,
+                 threshold_key=None, comparison=">=", unit="",
+                 region_source=None, condition=None):
+        self.rule_id = rule_id
+        self.level = level
+        self.measurement = measurement          # key in the lesion dict
+        self.measurement_name = measurement_name  # plain language, for users
+        self.threshold_key = threshold_key      # dotted config path, or None
+        self.comparison = comparison
+        self.unit = unit
+        # where the measurement was computed, so an overlay can outline it
+        self.region_source = region_source or "lesion_bbox"
+        # a rule with no numeric threshold (a state change rather than a
+        # crossing) describes its trigger here instead
+        self.condition = condition
+
+    def threshold(self, cfg):
+        if self.threshold_key is None:
+            return None
+        section, key = self.threshold_key.split(".", 1)
+        return cfg[section][key]
+
+    def sentence(self, cfg):
+        """The rule as a readable sentence, generated from the spec."""
+        if self.threshold_key is None:
+            return f"This counts as {self.level.lower()} when {self.condition}."
+        value = self.threshold(cfg)
+        word = "at least" if self.comparison == ">=" else "more than"
+        return (f"This counts as {self.level.lower()} when "
+                f"{self.measurement_name} is {word} "
+                f"{_fmt(value)}{self.unit}.")
+
+    def fired_detail(self, measured, cfg):
+        """The detail line shown when the rule fires."""
+        if self.threshold_key is None:
+            return self.condition
+        value = self.threshold(cfg)
+        return (f"{self.measurement_name} was {_fmt(measured)}{self.unit}, "
+                f"{'at or above' if self.comparison == '>=' else 'above'} the "
+                f"{_fmt(value)}{self.unit} mark")
+
+
+def _fmt(value):
+    """Numbers as a reader would write them, not as Python prints them."""
+    if value is None:
+        return "-"
+    if isinstance(value, float) and value == int(value):
+        return str(int(value))
+    return str(value)
+
+
+RULE_SPECS = {
+    "AREA_GROWTH_LARGE": RuleSpec(
+        "AREA_GROWTH_LARGE", ELEVATED,
+        measurement="area_change_pct",
+        measurement_name="how much the marked area grew since the last visit",
+        threshold_key="risk.growth_elevated_pct", unit="%",
+    ),
+    "AREA_GROWTH": RuleSpec(
+        "AREA_GROWTH", MODERATE,
+        measurement="area_change_pct",
+        measurement_name="how much the marked area grew since the last visit",
+        threshold_key="risk.growth_moderate_pct", unit="%",
+    ),
+    "NEW_LESION": RuleSpec(
+        "NEW_LESION", MODERATE,
+        measurement="state",
+        measurement_name="whether the marked area is new",
+        condition="an area is visible now that was not visible last visit",
+    ),
+    "COLOUR_CHANGE": RuleSpec(
+        "COLOUR_CHANGE", MODERATE,
+        measurement="color_magnitude",
+        measurement_name="how much the colour of the marked area changed "
+                         "compared with the tissue around it",
+        threshold_key="delta.relative_color_thresh",
+        region_source="lesion_and_ring",
+    ),
+    "PERSISTENT_CONDITION": RuleSpec(
+        "PERSISTENT_CONDITION", MODERATE,
+        measurement="probability",
+        measurement_name="how confident the parked classifier was at both visits",
+        threshold_key="risk.condition_prob_high",
+        condition="the parked classifier agreed at both visits",
+    ),
+}
+
+
+def rule_spec(rule_id):
+    return RULE_SPECS.get(rule_id)
+
+
 def _comparable(change_report):
     return [l for l in change_report.get("lesions", []) if l.get("comparability") == FULL]
 
