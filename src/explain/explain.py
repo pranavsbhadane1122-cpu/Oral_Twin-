@@ -54,6 +54,46 @@ UNITS = {"area_change_pct": "%", "area_visit1_px": " pixels",
          "area_visit2_px": " pixels"}
 
 
+# --------------------------------------------------------------------------
+# The risk statement.
+#
+# It says what the risk IS, in terms of ACTION rather than condition. "This area
+# has changed enough to be worth having looked at" is a statement about what to
+# do; "this area shows signs of X" is a statement about what something is, and
+# this project cannot support one.
+#
+# It names a change and a reason to seek review. It never names a condition, a
+# category, a likelihood, or a body system - and a test enforces each of those,
+# including the probability words, because "likely" is the easiest one to reach
+# for when describing a band.
+# --------------------------------------------------------------------------
+
+RISK_STATEMENTS = {
+    ELEVATED: ("This area has changed enough since {earlier} to be worth having "
+               "looked at."),
+    MODERATE: ("This area has changed since {earlier} by enough to be worth "
+               "mentioning at your next visit."),
+    LOW: ("Nothing measured here changed enough since {earlier} to single this "
+          "area out."),
+    NOT_ASSESSED: ("No comparison was made, so there is nothing to act on either "
+                   "way."),
+}
+
+
+def risk_statement(band, earlier_date=None):
+    """The band as a reason to act, with no condition and no likelihood."""
+    template = RISK_STATEMENTS.get(band, RISK_STATEMENTS[NOT_ASSESSED])
+    # "{earlier}" must never survive into output: when no date is known the
+    # sentence is rewritten rather than left with a hole in it. An unfilled
+    # placeholder in a report about someone is worse than a vaguer sentence.
+    if "{earlier}" not in template:
+        return template
+    if earlier_date:
+        return template.format(earlier=earlier_date)
+    return template.replace("since {earlier} ", "since the earlier photo ") \
+                   .replace("since {earlier}", "since the earlier photo")
+
+
 def _measurements(lesion, confidence):
     """Every value that fed the decision, named in plain language."""
     colour = lesion.get("color_shift") or {}
@@ -139,7 +179,8 @@ def _deciding(fired, cfg):
     return [r for r in fired if ORDER[r["level"]] == top]
 
 
-def explain_comparable(change_report, risk, cfg=None):
+def explain_comparable(change_report, risk, cfg=None,
+                       earlier_date=None, later_date=None):
     """Full explanation for a comparison that was actually made."""
     cfg = cfg or load_config()
     confidence = float(change_report.get("alignment_confidence", 0.0))
@@ -200,6 +241,9 @@ def explain_comparable(change_report, risk, cfg=None):
         "kind": "comparable",
         "band": band,
         "band_text": BAND_TEXT.get(band, ""),
+        "risk_statement": risk_statement(band, earlier_date),
+        "earlier_date": earlier_date,
+        "later_date": later_date,
         "measurements": _measurements(primary, confidence),
         "deciding_text": deciding_text,
         "deciding_rules": [d["rule"] for d in deciding],
@@ -240,7 +284,8 @@ REFUSAL_CHECKS = {
 }
 
 
-def explain_refused(check="not_comparable"):
+def explain_refused(check="not_comparable", region=None,
+                    earlier_date=None, later_date=None):
     """Qualitative explanation only. No numbers, by construction.
 
     There is nothing to interpolate a measurement into: the two strings are
@@ -255,21 +300,32 @@ def explain_refused(check="not_comparable"):
         "band_text": BAND_TEXT[NOT_ASSESSED],
         "check_failed": failed,
         "what_to_do": action,
+        # section 1 renders on refusals too, so the reader can see WHAT was
+        # attempted rather than only that it did not work
+        "region": region,
+        "earlier_date": earlier_date,
+        "later_date": later_date,
         "disclaimer": DISCLAIMER,
     }
 
 
-def explain(change_report, risk, cfg=None):
+def explain(change_report, risk, cfg=None, earlier_date=None, later_date=None):
     """Dispatch on the result, exactly as the UI does."""
     if change_report.get("status") != "ok" or not (
             change_report.get("summary", {}) or {}).get("comparable", False):
         reason = (change_report.get("reason") or "").lower()
+        lesions = change_report.get("lesions") or []
+        region = _region(lesions[0], None) if lesions else None
         if "could not be lined up" in reason or "below the floor" in reason:
-            return explain_refused("low_confidence")
-        if "align" in reason:
-            return explain_refused("alignment_failed")
-        return explain_refused("not_comparable")
-    return explain_comparable(change_report, risk, cfg)
+            check = "low_confidence"
+        elif "align" in reason:
+            check = "alignment_failed"
+        else:
+            check = "not_comparable"
+        return explain_refused(check, region=region,
+                               earlier_date=earlier_date, later_date=later_date)
+    return explain_comparable(change_report, risk, cfg,
+                              earlier_date=earlier_date, later_date=later_date)
 
 
 def unregistered_thresholds():

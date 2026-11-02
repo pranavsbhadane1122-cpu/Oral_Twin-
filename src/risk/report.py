@@ -14,7 +14,7 @@ OralTwin is a screening aid, not a diagnostic tool.
 """
 
 from src.delta.compare import FULL, PARTIAL
-from src.risk.risk_rules import LOW
+from src.risk.risk_rules import NOT_ASSESSED, LOW
 from src.utils.config import load_config
 
 HEADER = "ORALTWIN VISIT COMPARISON"
@@ -66,6 +66,20 @@ def build_report(pair_name, change_report, risk, prediction_visit1=None,
     image_paths = image_paths or {}
     alignment = alignment or {}
 
+    # ----------------------------------------------------------------
+    # THE ORDER OF THIS REPORT IS THE POINT.
+    #
+    # The band appears once, in THEREFORE, as the conclusion of reasoning the
+    # reader has already seen. It used to appear in a "SCREENING BAND: X"
+    # header two thirds of the way up, which made everything below it
+    # commentary on a verdict already delivered. The words were the same; the
+    # object was a prediction with justification attached.
+    #
+    # Nothing above THEREFORE may name the band. The old header, the risk
+    # text, the per-rule detail lines and the headline summary all did, so
+    # they are gone - their content is in the explanation sections, generated
+    # from RULE_SPECS rather than restated here.
+    # ----------------------------------------------------------------
     lines = [
         "=" * 68,
         f"{HEADER} - {pair_name}",
@@ -74,53 +88,30 @@ def build_report(pair_name, change_report, risk, prediction_visit1=None,
         "WHAT THE PHOTOS SHOW",
         *condition_block(prediction_visit1, prediction_visit2, cfg),
         "",
-        "WHAT CHANGED SINCE LAST VISIT",
     ]
 
-    if change_report.get("status") != "ok":
-        lines.append(f"  Could not compare: {change_report.get('reason')}")
-    else:
-        lines.append(f"  {change_report['summary']['headline']}")
-        lines += lesion_lines(change_report)
-        conf = change_report.get("alignment_confidence")
-        if conf is not None:
-            lines.append(f"  (photo alignment confidence {conf:.2f}"
-                         f"{', ' + alignment['reason'] if alignment.get('reason') else ''})")
-
-    lines += ["", f"SCREENING BAND: {risk['band']}", ""]
-    lines += [f"  {line}" for line in risk["text"].splitlines()]
-
-    if risk["rules_fired"]:
-        lines += ["", "  Why this band (explicit rules):"]
-        for rule in risk["rules_fired"]:
-            lines.append(f"    [{rule['rule']}] ({rule['level']}) {rule['detail']}")
-    else:
-        lines += ["", "  Why this band: no change rule was triggered."]
-
-    if image_paths:
-        lines += ["", "WHERE THE MODEL WAS LOOKING"]
-        for label, path in image_paths.items():
-            lines.append(f"  {label}: {path}")
-        lines.append("  Warm colours mark the regions that most influenced the model. "
-                     "On the change map, red gained attention and blue lost it.")
-
-    # The full account of why this landed where it did. Generated from the
-    # rule definitions and docs/CLAIMS.md, and reporting the result it was
-    # handed rather than recomputing anything.
+    explanation_failed = None
     try:
         from src.explain.explain import explain as build_explanation
         from src.explain.render import render as render_explanation
 
         explanation = build_explanation(change_report, risk, cfg)
-        lines += ["", "-" * 68, ""]
         lines += render_explanation(explanation).splitlines()
     except Exception as exc:                            # noqa: BLE001
-        # A broken explanation must not suppress the report it explains, but it
-        # must be visible rather than silently absent.
-        lines += ["", f"[explanation unavailable: {type(exc).__name__}: {exc}]"]
+        # A broken explanation must not suppress the report, but it must be
+        # visible rather than silently absent.
+        explanation_failed = f"{type(exc).__name__}: {exc}"
+        lines += [f"[explanation unavailable: {explanation_failed}]"]
+
+    if image_paths:
+        lines += ["", "WHERE THE MEASUREMENTS CAME FROM"]
+        for label, path in image_paths.items():
+            lines.append(f"  {label}: {path}")
+        lines.append("  These images mark the regions the numbers above were "
+                     "computed from.")
 
     lines += ["", "BACKGROUND", f"  {risk['context_note']}"]
-    if risk["band"] != LOW:
+    if risk["band"] not in (LOW, NOT_ASSESSED):
         lines += ["", "NEXT STEP", "  Book a check-up and show these photos to your dentist."]
 
     lines += ["", "-" * 68, FOOTER, ""]

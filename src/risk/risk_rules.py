@@ -106,13 +106,19 @@ class RuleSpec:
         return cfg[section][key]
 
     def sentence(self, cfg):
-        """The rule as a readable sentence, generated from the spec."""
+        """The rule as a readable sentence, generated from the spec.
+
+        DELIBERATELY DOES NOT NAME THE BAND. An earlier version said "This
+        counts as elevated when ...", which announced the verdict in section 3
+        of a report whose whole design holds it back until section 5 - and
+        beside a measured value, a reader could read the band off it. The rule
+        states its threshold; THEREFORE states the band.
+        """
         if self.threshold_key is None:
-            return f"This counts as {self.level.lower()} when {self.condition}."
+            return f"One rule applies when {self.condition}."
         value = self.threshold(cfg)
         word = "at least" if self.comparison == ">=" else "more than"
-        return (f"This counts as {self.level.lower()} when "
-                f"{self.measurement_name} is {word} "
+        return (f"One rule applies when {self.measurement_name} is {word} "
                 f"{_fmt(value)}{self.unit}.")
 
     def fired_detail(self, measured, cfg):
