@@ -1,0 +1,100 @@
+TRACK RE-MEASUREMENT - 2026-11-04
+Every figure below is computed fresh from the saved checkpoint and the
+stored splits. None is copied from a log.
+
+==========================================================================
+TRACK A - gum condition (models/classifier_3class.h5)
+==========================================================================
+internal test set: 52 images from data\processed\classification\test
+
+  overall accuracy: 0.635 [0.499, 0.752]  (33/52)
+
+  one-vs-rest per class (a 3-class model has no single sensitivity):
+  [caries]
+    class balance : 18/52 positive (34.6%)  -  18 of 52 images are caries
+    sensitivity   : 0.833 [0.608, 0.942]  (15/18)
+    specificity   : 0.794 [0.632, 0.897]  (27/34)
+    PPV           : 0.682 [0.473, 0.836]  (15/22)
+    NPV           : 0.900 [0.744, 0.965]  (27/30)
+    accuracy      : 0.808 [0.681, 0.892]  (42/52)
+    confusion     : TP 15  FP 7  FN 3  TN 27
+
+  [calculus]
+    class balance : 13/52 positive (25.0%)  -  13 of 52 images are calculus
+    sensitivity   : 0.692 [0.424, 0.873]  (9/13)
+    specificity   : 0.821 [0.673, 0.910]  (32/39)
+    PPV           : 0.562 [0.332, 0.769]  (9/16)
+    NPV           : 0.889 [0.747, 0.956]  (32/36)
+    accuracy      : 0.788 [0.660, 0.878]  (41/52)
+    confusion     : TP 9  FP 7  FN 4  TN 32
+
+  [gingivitis]
+    class balance : 21/52 positive (40.4%)  -  21 of 52 images are gingivitis
+    sensitivity   : 0.429 [0.245, 0.635]  (9/21)
+    specificity   : 0.839 [0.674, 0.929]  (26/31)
+    PPV           : 0.643 [0.388, 0.837]  (9/14)
+    NPV           : 0.684 [0.525, 0.809]  (26/38)
+    accuracy      : 0.673 [0.538, 0.785]  (35/52)
+    confusion     : TP 9  FP 5  FN 12  TN 26
+
+  EXTERNAL VALIDATION: none exists for this model.
+  No second dataset shares these three labels. The only external set
+  in the project, SMART-OM, carries Normal / OPMD / Oral Cancer, which
+  do not map onto caries / calculus / gingivitis. Track A therefore has
+  NO out-of-domain figure at all, and cannot be given one today.
+
+==========================================================================
+TRACK C - OPMD / referral (models/classifier_binary_referral.h5)
+==========================================================================
+internal: Piyarathne test split, 449 images
+
+  [refer vs no_refer, internal]
+    class balance : 228/449 positive (50.8%)  -  patient-disjoint split; refer = OPMD + OCA
+    sensitivity   : 0.487 [0.423, 0.551]  (111/228)
+    specificity   : 0.774 [0.714, 0.824]  (171/221)
+    PPV           : 0.689 [0.614, 0.756]  (111/161)
+    NPV           : 0.594 [0.536, 0.649]  (171/288)
+    accuracy      : 0.628 [0.582, 0.672]  (282/449)
+    confusion     : TP 111  FP 50  FN 117  TN 171
+
+external: SMART-OM, 2270 images, never trained on
+
+  [refer vs no_refer, external SMART-OM]
+    class balance : 125/2270 positive (5.5%)  -  different clinic, different cameras; accuracy here is base-rate dominated
+    sensitivity   : 0.072 [0.038, 0.131]  (9/125)
+    specificity   : 0.964 [0.955, 0.971]  (2067/2145)
+    PPV           : 0.103 [0.055, 0.185]  (9/87)
+    NPV           : 0.947 [0.937, 0.956]  (2067/2183)
+    accuracy      : 0.915 [0.902, 0.925]  (2076/2270)
+    confusion     : TP 9  FP 78  FN 116  TN 2067
+
+==========================================================================
+TRACK B - lesion segmentation (models/segmenter.h5, lesion channel)
+==========================================================================
+internal: Piyarathne test split, 449 cached pairs
+
+  [lesion pixels, internal]
+    class balance : 2513860/29425664 lesion pixels (8.54%)  -  heavily imbalanced, which is why pixel accuracy is meaningless here
+    sensitivity   : 0.689 [0.689, 0.690]  (1732917/2513860)
+    specificity   : 0.893 [0.893, 0.893]  (24041489/26911804)
+    PPV           : 0.376 [0.376, 0.377]  (1732917/4603232)
+    NPV           : 0.969 [0.968, 0.969]  (24041489/24822432)
+    mean Dice     : 0.362  (n=446 images with a lesion in truth or prediction)
+
+  EXTERNAL VALIDATION: none exists for this model.
+  No second dataset carries lesion polygons. SMART-OM annotations were
+  excluded in Phase 1 as burned into the images. Track B has NO
+  out-of-domain figure and cannot be given one today.
+
+==========================================================================
+SUMMARY - what would travel with each track score
+==========================================================================
+  Track C internal sensitivity : 0.487
+  Track C external sensitivity : 0.072   (125/2270 positive)
+  Track B pixel sensitivity    : 0.689
+  Track B mean Dice            : 0.362
+  Track A caries       sens    : 0.833
+  Track A calculus     sens    : 0.692
+  Track A gingivitis   sens    : 0.429
+
+OralTwin is a screening aid, not a diagnostic tool.

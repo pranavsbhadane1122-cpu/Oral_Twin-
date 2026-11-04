@@ -573,3 +573,75 @@ engine had supplied a perfectly good explanation and the caption was discarding
 it. Found by reading a rendered report, not by a test.
 
 Evidence: `data/processed/caption_examples/` (git-ignored).
+
+---
+
+## 2026-11-04 - Track A/B/C re-measurement, before surfacing
+
+Every model about to be surfaced as a track was re-evaluated from its saved
+checkpoint and the stored splits. Nothing here is copied from an earlier log.
+These figures are destined to appear in front of a reader beside a score, so
+they are recorded as a dated run rather than left as artefact-only output.
+
+Full output: models/logs/track_remeasurement.txt
+Script: scripts/remeasure_tracks.py
+
+### Track C - OPMD / referral (classifier_binary_referral.h5)
+
+| | internal (Piyarathne test) | external (SMART-OM) |
+|---|---|---|
+| class balance | 228/449 positive (50.8%) | **125/2270 positive (5.5%)** |
+| sensitivity | 0.487 [0.423, 0.551] | **0.072 [0.038, 0.131]** |
+| specificity | 0.774 [0.714, 0.824] | 0.964 [0.955, 0.971] |
+| PPV | 0.689 [0.614, 0.756] | 0.103 [0.055, 0.185] |
+| NPV | 0.594 [0.536, 0.649] | 0.947 [0.937, 0.956] |
+| accuracy | 0.628 [0.582, 0.672] | 0.915 - base-rate artefact, do not quote |
+
+Internal confusion TP 111, FP 50, FN 117, TN 171. The previously recorded
+internal sensitivity was 0.491 (TP 112, FN 116); this run gives 0.487. **One
+image of 449 changed side.** Immaterial, and consistent with resize or
+preprocessing nondeterminism rather than a change in the model.
+
+### Track B - lesion segmentation (segmenter.h5, lesion channel)
+
+Per-pixel over 449 test images, threshold 0.5. Lesion pixels are 8.54% of all
+pixels, so pixel accuracy means nothing here and is not reported as a headline.
+
+| | value |
+|---|---|
+| sensitivity | 0.689 [0.689, 0.690] |
+| specificity | 0.893 |
+| **PPV** | **0.376** |
+| NPV | 0.969 |
+| **mean Dice (per image)** | **0.362** |
+
+The per-pixel sensitivity of 0.689 and the per-image Dice of 0.362 describe the
+same model. The first is the friendlier number and the second is the honest
+summary: a PPV of 0.376 says fewer than two in five pixels called lesion are
+lesion. The gate this model failed was written against Dice.
+
+### Track A - gum condition (classifier_3class.h5)
+
+52 internal test images. Overall accuracy 0.635 [0.499, 0.752], unchanged from
+the recorded 0.6346.
+
+| class | n | sensitivity | specificity | PPV | NPV |
+|---|---:|---|---|---|---|
+| caries | 18 | 0.833 [0.608, 0.942] | 0.794 | 0.682 | 0.900 |
+| calculus | 13 | 0.692 [0.424, 0.873] | 0.821 | 0.562 | 0.889 |
+| gingivitis | 21 | **0.429 [0.245, 0.635]** | 0.839 | 0.643 | 0.684 |
+
+### No external validation exists for Track A or Track B
+
+Not "not yet run" - **cannot be run with what the project holds.**
+
+Track A: no second dataset shares caries / calculus / gingivitis. SMART-OM
+carries Normal / OPMD / Oral Cancer, which do not map onto them.
+
+Track B: no second dataset carries lesion polygons. The SMART-OM annotations
+were excluded in Phase 1 as burned into the images.
+
+Track C is the only track with an out-of-domain figure, and that figure is
+0.072.
+
+*OralTwin is a screening aid, not a diagnostic tool.*
