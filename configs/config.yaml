@@ -18,7 +18,7 @@ classification:
   # Phase 8: the classifier is PARKED (see README, Known issues). While this is
   # false no classifier prediction may reach any user-facing string, and the
   # PERSISTENT_CONDITION risk rule is disabled.
-  surface_predictions: false
+  surface_predictions: true
   # Phase 2 retrain runs the task OralTwin actually performs: a screening aid
   # never names a diagnosis, so the question is "does this need a dentist to look
   # at it". It is also far better powered than the 4-class OCA cell (n=19).
@@ -179,8 +179,29 @@ explain:
   diverging_colormap: bwr      # change-CAM: red = more attention, blue = less
   flat_cam_std_eps: 0.01       # heatmap std below this = flat = uninformative
 
+screening:
+  # Score at or above this is "Flagged for review"; below it, "Not flagged".
+  # A threshold, not a diagnosis: the two labels say which side of this line
+  # the score fell and nothing else.
+  #
+  # PROVISIONAL. 0.5 is the argmax point of a two-class softmax, which is
+  # where the model's own decision already sits - it is not a value chosen
+  # against an operating point anyone selected. Moving it trades the 0.072
+  # external sensitivity against the 0.103 external PPV, and nobody has
+  # decided which way that trade should go. See docs/CLAIMS.md section 4.
+  flag_threshold: 0.5
+
 risk:
   # rule-based bands; no learned risk model, no personal prediction
+  #
+  # SURFACING THE CLASSIFIER IS NOT THE SAME AS LETTING IT MOVE THE BAND.
+  # Those two were conflated under classification.surface_predictions, so
+  # turning that on for Tracks A and C silently unblocked PERSISTENT_CONDITION
+  # - a rule that raises the band from classifier output and whose message
+  # named the condition. The track brief says the tracks are an ADDITIONAL
+  # output that does not gate the change measurement; a rule that moves the
+  # band is the change measurement, so it stays off until decided separately.
+  allow_classifier_rules: false
   growth_moderate_pct: 10.0    # notable growth on a comparable lesion
   growth_elevated_pct: 30.0    # substantial growth
   condition_prob_high: 0.70    # classifier confidence for a "confident" condition

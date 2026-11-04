@@ -238,8 +238,17 @@ class TestInducedRefusal(unittest.TestCase):
 
 
 class TestStaticUiText(unittest.TestCase):
-    def test_switch_is_off(self):
-        self.assertFalse(CFG["classification"]["surface_predictions"])
+    def test_the_classifier_may_be_shown_but_not_move_the_band(self):
+        """Updated 2026-11-04. Two permissions, separated.
+
+        surface_predictions now means the classifier output may be SHOWN, as
+        Tracks A and C - recorded in docs/CLAIMS.md section 4b.
+        risk.allow_classifier_rules, which would let it move the band, stays
+        off. Asserting both is stronger than asserting the old single flag,
+        because the dangerous half is named rather than implied.
+        """
+        self.assertTrue(CFG["classification"]["surface_predictions"])
+        self.assertFalse(CFG["risk"]["allow_classifier_rules"])
 
     def test_not_included_panel_names_the_gaps(self):
         text = " ".join(NOT_INCLUDED).lower()

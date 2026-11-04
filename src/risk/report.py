@@ -29,6 +29,10 @@ PARKED_NOTICE = [
 ]
 
 
+# "not assessed" was the wording here until 2026-11-04. It collided
+# with the Not assessed BAND name, so a report with no prediction
+# appeared to announce its band in the header - which the ordering
+# test caught. Two different meanings must not share a phrase.
 def condition_block(prediction_visit1, prediction_visit2, cfg=None):
     """Condition lines, or a parked notice when classification.surface_predictions
     is false. Nothing derived from the classifier may cross this boundary."""
@@ -43,10 +47,25 @@ def condition_block(prediction_visit1, prediction_visit2, cfg=None):
 
 
 def condition_line(prediction, label):
+    """A SCORE, never a condition name.
+
+    Until 2026-11-04 this read "signs consistent with <class> (model
+    confidence 0.88)", which was unreachable while the classifier was parked.
+    Surfacing the classifier for Tracks A and C made it reachable, and it was
+    wrong twice over: it names a condition, which this project does not do,
+    and "signs consistent with" is a diagnostic phrasing - in a report whose
+    own closing section says "this does not identify a condition".
+
+    What the track brief actually asks for is the SCORE with the measured
+    performance beside it. The score is what the model computes; the name is
+    an interpretation it has not earned, from a model that failed its
+    attention gate at 6/10.
+    """
     if not prediction:
-        return f"  {label}: not assessed"
-    return (f"  {label}: signs consistent with {prediction['class_name']} "
-            f"(model confidence {prediction['probability']:.2f})")
+        return f"  {label}: no screening score for this photograph"
+    return (f"  {label}: screening score {prediction['probability']:.2f} "
+            f"(see the measured performance below; the model does not name "
+            f"what it reacted to)")
 
 
 def lesion_lines(change_report):

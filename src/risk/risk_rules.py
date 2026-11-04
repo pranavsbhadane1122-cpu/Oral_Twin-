@@ -235,9 +235,15 @@ def evaluate_rules(change_report, prediction_visit1=None, prediction_visit2=None
                 f"{cfg['delta']['relative_color_thresh']})",
             ))
 
-    # the classifier is parked: while surface_predictions is false no rule may
-    # depend on its output, so PERSISTENT_CONDITION cannot fire at all
-    surface = cfg["classification"].get("surface_predictions", False)
+    # Two different permissions, deliberately separated.
+    #
+    # classification.surface_predictions says the classifier output may be
+    # SHOWN (as Tracks A and C). risk.allow_classifier_rules says it may MOVE
+    # THE BAND. The second is a much stronger claim and does not follow from
+    # the first: the track brief makes the tracks an additional output that
+    # does not gate the change measurement, and a rule that raises the band is
+    # the change measurement.
+    surface = cfg["risk"].get("allow_classifier_rules", False)
     p1, p2 = (prediction_visit1 or {}, prediction_visit2 or {}) if surface else ({}, {})
     persistent = [c.lower() for c in rcfg["persistent_conditions"]]
     threshold = rcfg["condition_prob_high"]
@@ -245,10 +251,16 @@ def evaluate_rules(change_report, prediction_visit1=None, prediction_visit2=None
     if (same and p1["class_name"].lower() in persistent
             and float(p1.get("probability", 0)) >= threshold
             and float(p2.get("probability", 0)) >= threshold):
+        # The condition name is NOT in this string, even though the rule has
+        # it. "signs consistent with X" is a diagnostic claim, and this
+        # project does not put a condition name in front of a reader - a rule
+        # that is currently disabled is no reason to leave a message that
+        # would break that the moment it is enabled.
         fired.append(_rule(
             "PERSISTENT_CONDITION", MODERATE,
-            f"signs consistent with {p1['class_name']} were picked up at both visits "
-            f"with high model confidence ({p1['probability']:.2f}, {p2['probability']:.2f})",
+            f"the same pattern was picked up at both visits "
+            f"({p1['probability']:.2f}, {p2['probability']:.2f} model "
+            f"confidence, from a model that failed its attention gate)",
         ))
 
     if partials:

@@ -69,15 +69,22 @@ binary referral (GATE FAILED)". Test split n = 449, patient-disjoint.
 | Value | What it measures | Gate | Verdict |
 |---|---|---|---|
 | 0.630 [0.585, 0.674] | Share of photographs sorted correctly into refer / do-not-refer. | report honestly | reported |
-| **0.491** [0.427, 0.556] | Share of cases that *needed* referral which it did refer. | — | **misses half** |
+| **0.487** [0.423, 0.551] | Share of cases that *needed* referral which it did refer. | — | **misses half** |
 | 0.774 [0.714, 0.824] | Share of cases not needing referral that it correctly left alone. | — | — |
 | 0.691 [0.616, 0.757] | Of those it referred, the share that genuinely needed it (PPV). | — | — |
 | 0.596 [0.538, 0.651] | Of those it did not refer, the share that genuinely did not need it (NPV). | — | — |
 | **6/10** | Heatmaps falling on oral tissue, scored blind by true class. | ≥ 8/10 | **FAIL** |
 | 0.902 [0.871, 0.926] | Warp stability. | ≥ 0.90 | PASS, point estimate only — the interval reaches below the gate |
 
-Confusion: TP 112, FP 50, FN 116, TN 171. **116 of 228 cases needing referral
+Confusion: TP 111, FP 50, FN 117, TN 171. **117 of 228 cases needing referral
 were not referred.**
+
+> **Updated 2026-11-04 from 0.491 to 0.487.** The re-measurement run found TP
+> 111 where the 2026-10-06 run found 112 — **one image of 449 changed side**.
+> This is resize or preprocessing nondeterminism, **not a change in the
+> model**: the checkpoint is byte-identical and every other figure, including
+> the external 0.072, reproduced exactly. Recorded because the figure now
+> appears in front of readers and the two runs would otherwise disagree.
 
 By original category: Healthy 0.798 [0.713, 0.863] (n=109), Benign 0.750
 [0.662, 0.821] (n=112), OPMD 0.464 [0.398, 0.532] (n=209), OCA 0.789
@@ -107,12 +114,22 @@ Source: **experiments.md 2026-10-06**. n = 2,270 images, OPMD vs Normal.
 | **0.072** [0.038, 0.131] | Share of OPMD cases referred. 9 of 125. | The headline external figure |
 | 0.964 [0.955, 0.971] | Share of Normal cases correctly left alone. | — |
 | 0.103 [0.055, 0.185] | Of those referred, the share genuinely OPMD. | — |
-| 0.915 [0.902, 0.925] | Overall share sorted correctly. | **MUST NEVER BE QUOTED** — base-rate artefact |
+| 0.915 [0.902, 0.925] | Overall share sorted correctly. | **MUST NEVER BE QUOTED ALONE** — base-rate artefact |
+| 0.947 [0.937, 0.956] | NPV — of those not referred, the share genuinely not OPMD. | **MUST NEVER BE QUOTED ALONE** — see below |
 | −41.9 points | Fall from internal 0.491 to external 0.072. | The external interval **excludes** the internal figure |
 
-> **Why 0.915 must never be quoted.** SMART-OM is **94.5% Normal**. A model that
-> answers "no referral" to almost everything scores 0.915 while being useless at
-> the task. This is the same failure mode as 0.9951 below.
+> **Why 0.915 and 0.947 must never be quoted alone.** SMART-OM is **94.5%
+> Normal**. A model that answers "no referral" to almost everything scores
+> 0.915 accuracy while being useless at the task.
+>
+> **The NPV is the same trap and reads as more reassuring.** Answering
+> "negative" to every image on a 94.5%-negative set yields an NPV of roughly
+> **0.945** by arithmetic alone — the measured 0.947 is barely above it. An NPV
+> of 0.947 sounds like "when it says no, it is right 95% of the time"; what it
+> mostly reflects is that almost everything is negative. Quote it only beside
+> the base rate and the 0.072 sensitivity.
+>
+> This is the same failure mode as 0.9951 below.
 
 ### 1.5 Acquisition confound baseline — `artefact only`
 
@@ -395,6 +412,7 @@ built to catch.
 | `alignment.cavity_threshold` | 0.5 | `provisional` | Moot - the cavity path lost its A/B and is retained only so the result can be rechecked. |
 | `alignment.cavity_min_area_frac` | 0.05 | `provisional` | As above. |
 | `alignment.cavity_dilate_px` | 6 | `provisional` | As above. |
+| `screening.flag_threshold` | 0.5 | `provisional` | The argmax point of a two-class softmax, which is where the model's own decision already sits — **not a value anyone chose against an operating point**. Moving it trades the 0.072 external sensitivity against the 0.103 external PPV, and nobody has decided which way that trade should go. Needs someone to state what a missed case costs relative to a false flag. |
 | `MatchIndicator.SCALE` | 40.0 | `provisional` | **Needs nothing, and that is the point.** It stretches a bar; it is not a threshold. The mapping contains no comparison, so it cannot create a state the bar did not have. Listed so nobody later mistakes it for a threshold and starts tuning it. |
 
 <!-- PARAMETER-TABLE-END -->
@@ -405,6 +423,69 @@ logged run. That is a consequence of finding 1 in
 [What I expected to find and could not](#what-i-expected-to-find-and-could-not),
 and it is why the explanation layer says `artefact only` instead of rounding up
 to calibrated.
+
+## 4b. Decisions — components surfaced despite a failed or unmet gate
+
+**This is the record, not a judgement.** A component shipped with a failed gate
+and no recorded decision looks concealed. A recorded decision is a position
+that can be defended, argued with, or reversed.
+
+On **2026-11-04** three components the register lists as PARKED or FAILED GATE
+were surfaced as Tracks A, B and C. Every one was re-measured first
+(`experiments.md`, 2026-11-04) and every score now carries its measured
+performance as a single inseparable object.
+
+### Track A — gum condition (`classifier_3class.h5`)
+
+| | |
+|---|---|
+| Gate | Grad-CAM ≥ 8/10 on tissue; warp stability ≥ 0.90 |
+| Achieved | **6/10** and **0.7885** |
+| Date failed | 2026-09-10, confirmed 2026-09-11 |
+| Date surfaced | **2026-11-04** |
+| Current performance | accuracy 0.635 [0.499, 0.752] on 52 images. Per-class sensitivity: caries 0.833 [0.608, 0.942] (n=18), calculus 0.692 [0.424, 0.873] (n=13), **gingivitis 0.429 [0.245, 0.635] (n=21)** |
+| External | **None exists and none can be run.** No second dataset in the project shares these three labels. |
+
+The gingivitis interval spans "misses three quarters" to "finds two thirds".
+
+### Track B — lesion outline (`segmenter.h5`, lesion channel)
+
+| | |
+|---|---|
+| Gate | lesion Dice ≥ 0.70 **and** ≥ 8/10 overlays on annotated tissue |
+| Achieved | **0.362** and **5/10** |
+| Date failed | 2026-10-06 |
+| Date surfaced | **2026-11-04** |
+| Current performance | mean Dice **0.362** over 449 photographs; per-pixel sensitivity 0.689, **PPV 0.376** |
+| External | **None exists and none can be run.** No second dataset carries lesion polygons; SMART-OM's were excluded in Phase 1 as burned into the images. |
+
+The model was found to have learned to outline the mouth rather than the
+lesion — Dice against the true cavity (0.494) exceeds Dice against the true
+lesion (0.362). **That finding is unchanged by this decision.**
+
+### Track C — screening score (`classifier_binary_referral.h5`)
+
+| | |
+|---|---|
+| Gate | Grad-CAM ≥ 8/10 on oral tissue |
+| Achieved | **6/10** |
+| Date failed | 2026-10-06 |
+| Date surfaced | **2026-11-04** |
+| Current performance, internal | sensitivity 0.487 [0.423, 0.551], specificity 0.774, PPV 0.689, NPV 0.594 — on a set that is 50.8% positive |
+| Current performance, external | **sensitivity 0.072 [0.038, 0.131] — 9 of 125** — on a set that is 5.5% positive |
+
+**This is the only track with an external figure, and it is 0.072.** The
+not-flagged branch states that count verbatim, generated from the measurement
+file rather than typed, because a model that finds 9 of 125 must not produce a
+silence that reads as an all-clear.
+
+### What did not change
+
+`surface_predictions` moved to `true`, but **no failed gate was reopened, no
+threshold was moved to make anything pass, and no measurement was re-run until
+it improved.** The gates remain failed and are recorded above as failed. What
+changed is that the outputs are shown **with** their failure attached, rather
+than withheld.
 
 ## 5. What this project does not do
 

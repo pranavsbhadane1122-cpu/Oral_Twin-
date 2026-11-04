@@ -243,21 +243,44 @@ class TestRiskRules(unittest.TestCase):
         self.assertTrue(risk["escalated_by_rule_count"])
         self.assertIn("COLOUR_CHANGE", [r["rule"] for r in risk["rules_fired"]])
 
-    def test_persistent_condition_rule_blocked_while_classifier_parked(self):
-        """surface_predictions is false, so no rule may use classifier output."""
+    def test_classifier_output_cannot_move_the_band(self):
+        """Surfacing the classifier is not the same as letting it move the band.
+
+        Updated 2026-11-04. This previously asserted
+        classification.surface_predictions is false. That flag now means the
+        classifier may be SHOWN, as Tracks A and C - a decision recorded in
+        docs/CLAIMS.md section 4b. Whether it may MOVE THE BAND is a separate
+        and much stronger permission, risk.allow_classifier_rules, and it is
+        still off. The invariant this test protects is unchanged; only the
+        flag that controls it has been split in two.
+        """
         pred = {"class_name": "gingivitis", "probability": 0.95}
-        self.assertFalse(CFG["classification"]["surface_predictions"])
+        self.assertFalse(CFG["risk"]["allow_classifier_rules"])
         risk = stratify(change_report(1000, 1000), pred, dict(pred), cfg=CFG)
         self.assertEqual(risk["rules_fired"], [])
         self.assertEqual(risk["band"], LOW)
 
-    def test_persistent_condition_rule_fires_when_switch_on(self):
+    def test_persistent_condition_rule_fires_only_when_explicitly_allowed(self):
         pred = {"class_name": "gingivitis", "probability": 0.95}
         cfg = copy.deepcopy(CFG)
-        cfg["classification"]["surface_predictions"] = True
+        cfg["risk"]["allow_classifier_rules"] = True
         risk = stratify(change_report(1000, 1000), pred, dict(pred), cfg=cfg)
         self.assertEqual([r["rule"] for r in risk["rules_fired"]], ["PERSISTENT_CONDITION"])
         self.assertEqual(risk["band"], MODERATE)
+
+    def test_that_rule_names_no_condition_even_when_allowed(self):
+        """A disabled rule is no excuse for a message that would break the
+        guard the moment it is enabled."""
+        from tests.test_caption import CONDITION_RE
+        pred = {"class_name": "gingivitis", "probability": 0.95}
+        cfg = copy.deepcopy(CFG)
+        cfg["risk"]["allow_classifier_rules"] = True
+        risk = stratify(change_report(1000, 1000), pred, dict(pred), cfg=cfg)
+        for rule in risk["rules_fired"]:
+            found = CONDITION_RE.search(rule["detail"])
+            self.assertIsNone(found,
+                              f"{found.group(0) if found else ''!r} in: {rule['detail']}")
+        self.assertNotIn("signs consistent with", risk["text"])
 
     def test_non_comparable_lesion_never_raises_band(self):
         report = change_report(1000, 400, comparability=PARTIAL)
@@ -329,21 +352,58 @@ class TestReportLanguage(unittest.TestCase):
             assert_no_diagnostic_language(self, risk["text"])
             self.assertIn("screening aid", text.lower())
 
-    def test_no_classifier_output_while_parked(self):
+    def test_no_condition_name_reaches_the_report(self):
+        """Updated 2026-11-04: the switch is on, the invariant is not.
+
+        This previously also asserted "Condition screening is switched off",
+        which was a statement about the flag rather than about safety. The
+        flag has changed; the thing that matters - that no condition name and
+        no diagnostic phrasing reaches a reader - has not, and is asserted
+        here with the classifier output actually supplied.
+        """
         pred = {"class_name": "calculus", "probability": 0.88}
         risk = stratify(change_report(1000, 1000), cfg=CFG)
-        text = build_report("pair_test", change_report(1000, 1000), risk, pred, pred, cfg=CFG)
+        text = build_report("pair_test", change_report(1000, 1000), risk,
+                            pred, pred, cfg=CFG)
         self.assertNotIn("calculus", text.lower())
         self.assertNotIn("signs consistent with", text)
-        self.assertIn("Condition screening is switched off", text)
 
-    def test_condition_is_phrased_as_signs_not_diagnosis_when_switch_on(self):
+    def test_a_surfaced_classifier_reports_a_score_and_never_a_name(self):
+        """Updated 2026-11-04, and the claim is strengthened rather than moved.
+
+        This previously asserted the report says "signs consistent with" when
+        the switch is on. That phrasing was unreachable while the classifier
+        was parked, and surfacing it for Tracks A and C made it reachable -
+        at which point it was wrong twice: it names a condition, and "signs
+        consistent with" is diagnostic phrasing, in a report whose own
+        closing section says it does not identify a condition.
+
+        The report now shows the SCORE, which is what the model computes.
+        """
+        from tests.test_caption import CONDITION_RE
         pred = {"class_name": "calculus", "probability": 0.88}
         cfg = copy.deepcopy(CFG)
         cfg["classification"]["surface_predictions"] = True
         risk = stratify(change_report(1000, 1000), cfg=cfg)
-        text = build_report("pair_test", change_report(1000, 1000), risk, pred, pred, cfg=cfg)
-        self.assertIn("signs consistent with", text)
+        text = build_report("pair_test", change_report(1000, 1000), risk,
+                            pred, pred, cfg=cfg)
+        self.assertIn("screening score 0.88", text)
+        self.assertNotIn("signs consistent with", text)
+        self.assertNotIn("calculus", text.lower())
+        # strip the report's own DENIALS before scanning: "not a diagnostic
+        # tool" contains "diagnos" and is the opposite of the thing the
+        # guard exists to catch. Same allowance tests/test_app.py makes.
+        # Scoped to everything ABOVE the BACKGROUND block. That block is a
+        # cited population-level statement, framed in its own first words as
+        # "not a prediction about you", and it names gum disease on purpose.
+        # It predates this change and is out of scope for the question here,
+        # which is whether the CLASSIFIER output names a condition.
+        haystack = text.lower().split("background")[0]
+        for denial in ("not a diagnostic tool", "cannot diagnose anything",
+                       "not a diagnosis", "does not identify a condition"):
+            haystack = haystack.replace(denial, "")
+        found = CONDITION_RE.search(haystack)
+        self.assertIsNone(found, found.group(0) if found else None)
 
     def test_context_note_is_general_not_personal(self):
         risk = stratify(change_report(1000, 1600), cfg=CFG)

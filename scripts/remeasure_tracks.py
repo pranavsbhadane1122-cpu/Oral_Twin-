@@ -20,6 +20,7 @@ Usage: python scripts/remeasure_tracks.py
 """
 
 import csv
+import json
 import sys
 from datetime import date
 from pathlib import Path
@@ -293,6 +294,28 @@ def track_b(cfg):
             "dice": float(np.mean(dices)), "n_images": len(records)}
 
 
+def _with_intervals(results):
+    """Attach a Wilson interval to every rate, from its own numerator pair."""
+    out = {}
+    for name, m in results.items():
+        entry = dict(m)
+        for metric, (num, den) in {
+            "sensitivity": (m["tp"], m["tp"] + m["fn"]),
+            "specificity": (m["tn"], m["tn"] + m["fp"]),
+            "ppv": (m["tp"], m["tp"] + m["fp"]),
+            "npv": (m["tn"], m["tn"] + m["fn"]),
+        }.items():
+            if den:
+                value, low, high = wilson_interval(num, den)
+                entry[metric] = {"value": round(value, 4),
+                                 "ci": [round(low, 4), round(high, 4)],
+                                 "numerator": int(num), "denominator": int(den)}
+            else:
+                entry[metric] = None
+        out[name] = entry
+    return out
+
+
 def main():
     cfg = load_config()
     log(f"TRACK RE-MEASUREMENT - {date.today().isoformat()}")
@@ -322,7 +345,22 @@ def main():
 
     out = PROJECT_ROOT / cfg["paths"]["models"] / "logs" / "track_remeasurement.txt"
     out.write_text("\n".join(LINES), encoding="utf-8")
+
+    # Machine-readable, because src/tracks/ reads these figures rather than
+    # carrying typed copies of them. A number typed into the code beside the
+    # number it is supposed to equal is two numbers, and they diverge.
+    payload = {
+        "measured_on": date.today().isoformat(),
+        "script": "scripts/remeasure_tracks.py",
+        "track_a": _with_intervals(a) if a else None,
+        "track_b": b,
+        "track_c": {k: _with_intervals({k: v})[k] for k, v in c.items()} if c else None,
+    }
+    json_path = (PROJECT_ROOT / cfg["paths"]["models"] / "logs"
+                 / "track_remeasurement.json")
+    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"\nsaved {out}")
+    print(f"saved {json_path}")
 
 
 if __name__ == "__main__":

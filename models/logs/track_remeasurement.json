@@ -1,0 +1,236 @@
+{
+  "measured_on": "2026-11-04",
+  "script": "scripts/remeasure_tracks.py",
+  "track_a": {
+    "caries": {
+      "sensitivity": {
+        "value": 0.8333,
+        "ci": [
+          0.6078,
+          0.9416
+        ],
+        "numerator": 15,
+        "denominator": 18
+      },
+      "specificity": {
+        "value": 0.7941,
+        "ci": [
+          0.632,
+          0.8965
+        ],
+        "numerator": 27,
+        "denominator": 34
+      },
+      "ppv": {
+        "value": 0.6818,
+        "ci": [
+          0.4732,
+          0.8364
+        ],
+        "numerator": 15,
+        "denominator": 22
+      },
+      "npv": {
+        "value": 0.9,
+        "ci": [
+          0.7438,
+          0.9654
+        ],
+        "numerator": 27,
+        "denominator": 30
+      },
+      "n": 52,
+      "positives": 18,
+      "tp": 15,
+      "fp": 7,
+      "fn": 3,
+      "tn": 27
+    },
+    "calculus": {
+      "sensitivity": {
+        "value": 0.6923,
+        "ci": [
+          0.4237,
+          0.8732
+        ],
+        "numerator": 9,
+        "denominator": 13
+      },
+      "specificity": {
+        "value": 0.8205,
+        "ci": [
+          0.6733,
+          0.9102
+        ],
+        "numerator": 32,
+        "denominator": 39
+      },
+      "ppv": {
+        "value": 0.5625,
+        "ci": [
+          0.3318,
+          0.769
+        ],
+        "numerator": 9,
+        "denominator": 16
+      },
+      "npv": {
+        "value": 0.8889,
+        "ci": [
+          0.7468,
+          0.9559
+        ],
+        "numerator": 32,
+        "denominator": 36
+      },
+      "n": 52,
+      "positives": 13,
+      "tp": 9,
+      "fp": 7,
+      "fn": 4,
+      "tn": 32
+    },
+    "gingivitis": {
+      "sensitivity": {
+        "value": 0.4286,
+        "ci": [
+          0.2447,
+          0.6345
+        ],
+        "numerator": 9,
+        "denominator": 21
+      },
+      "specificity": {
+        "value": 0.8387,
+        "ci": [
+          0.6737,
+          0.9291
+        ],
+        "numerator": 26,
+        "denominator": 31
+      },
+      "ppv": {
+        "value": 0.6429,
+        "ci": [
+          0.3876,
+          0.8366
+        ],
+        "numerator": 9,
+        "denominator": 14
+      },
+      "npv": {
+        "value": 0.6842,
+        "ci": [
+          0.5254,
+          0.8092
+        ],
+        "numerator": 26,
+        "denominator": 38
+      },
+      "n": 52,
+      "positives": 21,
+      "tp": 9,
+      "fp": 5,
+      "fn": 12,
+      "tn": 26
+    }
+  },
+  "track_b": {
+    "sensitivity": 0.6893450709267819,
+    "specificity": 0.8933436420687368,
+    "ppv": 0.37645658528616416,
+    "npv": 0.9685388200479308,
+    "dice": 0.3619738070753084,
+    "n_images": 449
+  },
+  "track_c": {
+    "internal": {
+      "sensitivity": {
+        "value": 0.4868,
+        "ci": [
+          0.4227,
+          0.5514
+        ],
+        "numerator": 111,
+        "denominator": 228
+      },
+      "specificity": {
+        "value": 0.7738,
+        "ci": [
+          0.7142,
+          0.824
+        ],
+        "numerator": 171,
+        "denominator": 221
+      },
+      "ppv": {
+        "value": 0.6894,
+        "ci": [
+          0.6142,
+          0.7558
+        ],
+        "numerator": 111,
+        "denominator": 161
+      },
+      "npv": {
+        "value": 0.5938,
+        "ci": [
+          0.5362,
+          0.6489
+        ],
+        "numerator": 171,
+        "denominator": 288
+      },
+      "n": 449,
+      "positives": 228,
+      "tp": 111,
+      "fp": 50,
+      "fn": 117,
+      "tn": 171
+    },
+    "external": {
+      "sensitivity": {
+        "value": 0.072,
+        "ci": [
+          0.0383,
+          0.1312
+        ],
+        "numerator": 9,
+        "denominator": 125
+      },
+      "specificity": {
+        "value": 0.9636,
+        "ci": [
+          0.9548,
+          0.9708
+        ],
+        "numerator": 2067,
+        "denominator": 2145
+      },
+      "ppv": {
+        "value": 0.1034,
+        "ci": [
+          0.0554,
+          0.1851
+        ],
+        "numerator": 9,
+        "denominator": 87
+      },
+      "npv": {
+        "value": 0.9469,
+        "ci": [
+          0.9366,
+          0.9555
+        ],
+        "numerator": 2067,
+        "denominator": 2183
+      },
+      "n": 2270,
+      "positives": 125,
+      "tp": 9,
+      "fp": 78,
+      "fn": 116,
+      "tn": 2067
+    }
+  }
+}
